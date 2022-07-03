@@ -33,7 +33,7 @@ export const loginRequest = {
 // Add the endpoints here for Microsoft Graph API services you'd like to see 
 export const graphConfig = {
     graphMeEndpoint: "https://graph.microsoft.com/v1.0/me",
-    graphMeItemUploadEndpoint: "https://graph.microsoft.com/v1.0/me/drive/items/PARENT_ID:/FILE_NAME:/content",
+    graphMeItemUploadEndpoint: "https://graph.microsoft.com/v1.0/me/drive/items/01YP3BE5PDD2QV4TVWOJH2BXNNI5CZKI6V:/FILE_NAME:/content",
     graphMeItemDownloadEndpoint: "https://graph.microsoft.com/v1.0/me/drive/root:/photoapp/FILE_NAME?$select=content.downloadUrl,id",
     graphMePhotoAppIDEndpoint: "https://graph.microsoft.com/v1.0/me/drive/root:/photoapp?$select=id",
     graphMeFolderCreateEndpoint: "https://graph.microsoft.com/v1.0/me/drive/items/PARENT_ID/children?select=id"
