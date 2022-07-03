@@ -17,10 +17,29 @@ function AppAuthView(props) {
             // }
         };
 
+        const config2 = {
+            clientId: CLIENT_ID,
+            redirectUrl: MOBILE_REDIRECT_URL3,
+            scopes: ["User.Read", "Files.ReadWrite"],
+            additionalParameters: { prompt: 'select_account' },
+            serviceConfiguration: {
+                authorizationEndpoint:
+                    'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+                tokenEndpoint: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+            },
+        };
+
         // Log in to get an authentication token
-        const authState = await authorize(config);
-        console.log('Token==>', authState.accessToken)
-        ondriveUser(authState.accessToken)
+
+        try {
+            const authState = await authorize(config2);
+            console.log('Token==>', authState.accessToken)
+            ondriveUser(authState.accessToken)
+
+        } catch (error) {
+            console.log(error);
+        }
+
     }
 
     const fetchTokenV2 = async () => {
@@ -30,17 +49,33 @@ function AppAuthView(props) {
             redirectUrl: MOBILE_REDIRECT_URL3,
             scopes: ['openid', 'profile', 'email', 'offline_access']
         };
-
+        const config2 = {
+            clientId: CLIENT_ID,
+            redirectUrl: MOBILE_REDIRECT_URL3,
+            scopes: ["User.Read", "Files.ReadWrite"],
+            additionalParameters: { prompt: 'select_account' },
+            serviceConfiguration: {
+                authorizationEndpoint:
+                    'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+                tokenEndpoint: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+            },
+        };
         // Log in to get an authentication token
-        const authState = await authorize(config);
-        console.log('Token v2==>', JSON.stringify(authState))
+        try {
+            const authState = await authorize(config2);
+            console.log('Token v2==>', JSON.stringify(authState))
+            ondriveUser(authState.accessToken)
+        } catch (error) {
+            console.log(error);
+        }
+
 
     }
 
     const ondriveUser = async (token) => {
         console.log('Login token: ' + token);
         try {
-            const response = await fetch('https://graph.microsoft.com/v1.0/users', {
+            const response = await fetch('https://graph.microsoft.com/v1.0/me', {
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + token
@@ -52,7 +87,8 @@ function AppAuthView(props) {
                 // alert(result.token_type)
                 console.log('ondriveUser: ' + JSON.stringify(result));
                 // ondriveUserByID(token, result.value[0].id)
-
+                getSpecificFolderFiles(token, '1e93e66f-a605-4a5a-8b86-4dd273dc64cd')
+                // alert(JSON.stringify(result))
             } else {
                 alert(JSON.stringify(result))
             }
@@ -64,6 +100,60 @@ function AppAuthView(props) {
             // setLoading(false);
         }
 
+    }
+
+    const getFiles = async (token, userId) => {
+        console.log('getFiles userId: ' + token);
+        try {
+            const response = await fetch('https://graph.microsoft.com/v1.0/me/drive/root/children', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+            });
+            const result = await response.json();
+            console.log('getFiles res: ' + JSON.stringify(result));
+            if (response.status == 200) {
+                // alert(result.token_type)
+                console.log('getFiles: ' + JSON.stringify(result));
+                alert(JSON.stringify(result))
+            } else {
+                alert(JSON.stringify(result))
+            }
+        } catch (error) {
+            console.log('getFiles err: ' + JSON.stringify(error));
+            alert(error)
+
+        } finally {
+            // setLoading(false);
+        }
+    }
+
+    const getSpecificFolderFiles = async (token, userId) => {
+        console.log('getSpecificFolderFiles token: ' + token);
+        try {
+            const response = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/photoapp:/children', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+            });
+            const result = await response.json();
+            console.log('getSpecificFolderFiles res: ' + JSON.stringify(result));
+            if (response.status == 200) {
+                // alert(result.token_type)
+                console.log('getSpecificFolderFiles: ' + JSON.stringify(result));
+                alert(JSON.stringify(result))
+            } else {
+                alert(JSON.stringify(result))
+            }
+        } catch (error) {
+            console.log('getSpecificFolderFiles err: ' + JSON.stringify(error));
+            alert(error)
+
+        } finally {
+            // setLoading(false);
+        }
     }
 
 
