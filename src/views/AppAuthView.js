@@ -34,7 +34,8 @@ function AppAuthView(props) {
         try {
             const authState = await authorize(config2);
             console.log('Token==>', authState.accessToken)
-            ondriveUser(authState.accessToken)
+            // ondriveUser(authState.accessToken)
+            createFile(authState.accessToken)
 
         } catch (error) {
             console.log(error);
@@ -122,6 +123,41 @@ function AppAuthView(props) {
             }
         } catch (error) {
             console.log('getFiles err: ' + JSON.stringify(error));
+            alert(error)
+
+        } finally {
+            // setLoading(false);
+        }
+    }
+
+    const createFile = async (token) => {
+        console.log('createFile token: ' + token);
+
+        var raw = JSON.stringify({
+            "name": "TEST",
+            "folder": {},
+
+        });
+        try {
+            const response = await fetch('https://graph.microsoft.com/v1.0/me/drive/root/children', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                body: raw,
+            });
+            const result = await response.json();
+            console.log('createFile res: ' + JSON.stringify(result));
+            if (response.status == 200) {
+                // alert(result.token_type)
+                console.log('createFile: ' + JSON.stringify(result));
+                alert(JSON.stringify(result))
+            } else {
+                alert(JSON.stringify(result))
+            }
+        } catch (error) {
+            console.log('createFile err: ' + JSON.stringify(error));
             alert(error)
 
         } finally {
