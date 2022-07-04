@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Button, Text, ScrollView, SafeAreaView, Image } from 'react-native';
+import { View, Button, Text, ScrollView, SafeAreaView, Image, FlatList } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
 import { authorize } from 'react-native-app-auth';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
@@ -9,6 +9,8 @@ import RNFetchBlob from 'rn-fetch-blob'
 const images = [];
 function AppAuthView(props) {
     const [image, setImage] = useState();
+    const [imageLength, setImageLength] = useState();
+    const [login, setLogin] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [imageType, setImageType] = useState();
     const [imageName, setImageName] = useState();
@@ -18,7 +20,6 @@ function AppAuthView(props) {
 
 
     const pickSignleFile = async () => {
-        // Pick a single file
         try {
             const results = await DocumentPicker.pickMultiple({
                 type: [DocumentPicker.types.images],
@@ -27,6 +28,7 @@ function AppAuthView(props) {
             console.log(
                 'PickImage===>', JSON.stringify(results)
             );
+
             for (const res of results) {
                 var track = {
                     url: res.uri,
@@ -34,6 +36,7 @@ function AppAuthView(props) {
                     imageType: res.type,
                 };
                 images.push(track)
+
                 setImage(res.uri)
                 setImageType(res.type)
                 setImageName(res.name)
@@ -68,15 +71,14 @@ function AppAuthView(props) {
                 console.log('User tapped custom button: ', res.customButton);
                 alert(res.customButton);
             } else {
-                const source = { uri: res.uri };
-                console.log('response', JSON.stringify(res));
                 setImage(res.assets[0].uri)
-                console.log('image pick', res.assets[0].uri);
-                // this.setState({
-                //     filePath: res,
-                //     fileData: res.data,
-                //     fileUri: res.uri
-                // });
+                var track = {
+                    url: res.assets[0].uri,
+                    imageName: res.assets[0].fileName,
+                    imageType: res.assets[0].type,
+                };
+                images.push(track)
+                setList(images)
             }
         });
     }
@@ -126,8 +128,9 @@ function AppAuthView(props) {
 
         try {
             const authState = await authorize(config);
-            console.log('Token==>', authState.accessToken)
+            console.log('Login res==>', JSON.stringify(authState))
             setAccessToken(authState.accessToken)
+            setLogin(true)
             // fileUpload(authState.accessToken)
             // ondriveUser(authState.accessToken)
             // createFile(authState.accessToken)
@@ -325,16 +328,40 @@ function AppAuthView(props) {
             // setLoading(false);
         }
     }
+    const ChildViewColumn = (image) => {
+        return (
+            <View style={{ backgroundColor: 'gray', width: 200, height: 200, padding: 10, margin: 5, flexDirection: 'column' }}>
+                <View >
+                    <Image style={{ height: 200, width: '100%' }} source={{ uri: image }} />
+                </View>
+
+
+            </View>
+        )
+    }
+    const ListViewHorizantal = () => {
+        return (
+            <FlatList horizontal={true} data={images} renderItem={({ item }) => ChildViewColumn(item.url)} />
+        )
+    }
 
     return (
-        <View style={{ flex: 1, width: '100%' }}>
-            <Button title='Sign In' onPress={() => fetchTokenV1()} />
+        <View style={{ flex: 1, width: '100%', padding: 12 }}>
+            <Button title={login ? 'Logged' : 'Sign In'} onPress={() => fetchTokenV1()} />
             <View style={{ margin: 10 }} />
             {/* <Button title='pick image' onPress={() => pickSignleFile()} /> */}
-            <Button title='Pick Image' onPress={() => cameraLaunch()} />
+            <View style={{ flexDirection: 'row', marginBottom: 10, alignSelf: 'center' }}>
+                <Button title='Capture Image' onPress={() => cameraLaunch()} />
+                <View style={{ marginHorizontal: 12 }} />
+                <Button title='Pick Image' onPress={() => pickSignleFile()} />
+            </View>
+
+
             {/* <Button title='Upload file' onPress={() => fileUpload(accessToken)} /> */}
-            <Image style={{ width: 200, height: 200, alignSelf: 'center' }} source={{ uri: image }} />
-            <Button title={uploading ? 'Uploading...' : 'Upload'} onPress={() => upload()} />
+            {ListViewHorizantal()}
+            {/* <Image style={{ width: 200, height: 200, alignSelf: 'center' }} source={{ uri: image }} /> */}
+            <View style={{ margin: 12 }} />
+            <Button title={uploading ? 'Uploading...(' + images.length + ' image selected)' : 'Upload (' + images.length + ' image selected)'} onPress={() => upload()} />
         </View>
     );
 }
