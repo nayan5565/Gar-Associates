@@ -11,7 +11,7 @@ class LandingView extends Component {
 
                         <Button
                             title="App Auth"
-                            onPress={() => this.props.navigation.navigate('AppAuth')}
+                            onPress={() => this.props.navigation.navigate('One Drive')}
                         />
                         <View style={{ margin: 12 }}></View>
                         {/* <Button

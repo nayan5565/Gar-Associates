@@ -17,7 +17,7 @@ const App = () => {
     <NavigationContainer >
       <Stack.Navigator initialRouteName="Landing">
         <Stack.Screen name="Landing" component={LandingView} />
-        <Stack.Screen name="AppAuth" component={AppAuthView} />
+        <Stack.Screen name="One Drive" component={AppAuthView} />
         <Stack.Screen name="Api" component={OneDriveApi} />
       </Stack.Navigator>
 
