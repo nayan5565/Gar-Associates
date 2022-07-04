@@ -14,10 +14,10 @@ class LandingView extends Component {
                             onPress={() => this.props.navigation.navigate('AppAuth')}
                         />
                         <View style={{ margin: 12 }}></View>
-                        <Button
+                        {/* <Button
                             title="One Drive Api"
                             onPress={() => this.props.navigation.navigate('Api')}
-                        />
+                        /> */}
 
                     </View>
                 </ScrollView>

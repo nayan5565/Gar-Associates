@@ -1,36 +1,47 @@
 import React, { useState } from 'react';
-import { View, Button, Text, ScrollView, SafeAreaView } from 'react-native';
+import { View, Button, Text, ScrollView, SafeAreaView, Image } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
 import { authorize } from 'react-native-app-auth';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { CLIENT_ID, TENANT_ID, REDIRECT_URL, REACT_SINGLE_APP_TENANT_ID, REACT_SINGLE_APP_CLIENT_ID, REACT_SINGLE_APP_REDIRECT_URL, MOBILE_REDIRECT_URL, MOBILE_REDIRECT_URL2, MOBILE_REDIRECT_URL3, MOBILE_REDIRECT_URL4 } from '../constants/one_drive_credential';
 import { graphConfig } from '../constants/authConfig';
-import { Buffer } from "buffer";
 import RNFetchBlob from 'rn-fetch-blob'
-import { decode as atob, encode as btoa } from 'base-64'
-
-// var Buffer = require("@craftzdog/react-native-buffer").Buffer;
-
+const images = [];
 function AppAuthView(props) {
     const [image, setImage] = useState();
+    const [uploading, setUploading] = useState(false);
     const [imageType, setImageType] = useState();
     const [imageName, setImageName] = useState();
     const [base64, setBase64] = useState();
     const [accessToken, setAccessToken] = useState();
+    const [list, setList] = useState([]);
 
 
     const pickSignleFile = async () => {
         // Pick a single file
         try {
-            const res = await DocumentPicker.pickSingle({
+            const results = await DocumentPicker.pickMultiple({
                 type: [DocumentPicker.types.images],
+                allowMultiSelection: true
             });
             console.log(
-                'PickImage===>', JSON.stringify(res)
+                'PickImage===>', JSON.stringify(results)
             );
-            setImage(res.uri)
-            setImageType(res.type)
-            setImageName(res.name)
+            for (const res of results) {
+                var track = {
+                    url: res.uri,
+                    imageName: res.name,
+                    imageType: res.type,
+                };
+                images.push(track)
+                setImage(res.uri)
+                setImageType(res.type)
+                setImageName(res.name)
+            }
+            setList(images)
+            console.log(
+                'PickImageSize===>', images.length
+            );
         } catch (err) {
             if (DocumentPicker.isCancel(err)) {
                 // User cancelled the picker, exit any dialogs or menus and move on
@@ -59,6 +70,8 @@ function AppAuthView(props) {
             } else {
                 const source = { uri: res.uri };
                 console.log('response', JSON.stringify(res));
+                setImage(res.assets[0].uri)
+                console.log('image pick', res.assets[0].uri);
                 // this.setState({
                 //     filePath: res,
                 //     fileData: res.data,
@@ -86,34 +99,18 @@ function AppAuthView(props) {
                 console.log('User tapped custom button: ', res.customButton);
                 alert(res.customButton);
             } else {
-                const source = { uri: res.uri };
                 console.log('response', res.assets[0].uri);
                 setBase64(res.assets[0].base64)
                 setImageType(res.assets[0].type)
                 setImage(res.assets[0].uri)
                 setImageName(res.assets[0].fileName)
-                // this.setState({
-                //     filePath: res,
-                //     fileData: res.data,
-                //     fileUri: res.uri
-                // });
             }
         });
     }
 
     const fetchTokenV1 = async () => {
-        const config = {
-            issuer: 'https://login.microsoftonline.com/' + REACT_SINGLE_APP_TENANT_ID,
-            clientId: REACT_SINGLE_APP_CLIENT_ID,
-            redirectUrl: MOBILE_REDIRECT_URL3,
-            scopes: ['profile'],
-            grantTypes: 'client_credentials',
-            // additionalParameters: {
-            //     resource: 'your-resource'
-            // }
-        };
 
-        const config2 = {
+        const config = {
             clientId: CLIENT_ID,
             redirectUrl: MOBILE_REDIRECT_URL3,
             scopes: ["User.Read", "Files.ReadWrite"],
@@ -128,7 +125,7 @@ function AppAuthView(props) {
         // Log in to get an authentication token
 
         try {
-            const authState = await authorize(config2);
+            const authState = await authorize(config);
             console.log('Token==>', authState.accessToken)
             setAccessToken(authState.accessToken)
             // fileUpload(authState.accessToken)
@@ -138,36 +135,6 @@ function AppAuthView(props) {
         } catch (error) {
             console.log(error);
         }
-
-    }
-
-    const fetchTokenV2 = async () => {
-        const config = {
-            issuer: 'https://login.microsoftonline.com/' + TENANT_ID + '/v2.0',
-            clientId: CLIENT_ID,
-            redirectUrl: MOBILE_REDIRECT_URL3,
-            scopes: ['openid', 'profile', 'email', 'offline_access']
-        };
-        const config2 = {
-            clientId: CLIENT_ID,
-            redirectUrl: MOBILE_REDIRECT_URL3,
-            scopes: ["User.Read", "Files.ReadWrite"],
-            additionalParameters: { prompt: 'select_account' },
-            serviceConfiguration: {
-                authorizationEndpoint:
-                    'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-                tokenEndpoint: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-            },
-        };
-        // Log in to get an authentication token
-        try {
-            const authState = await authorize(config2);
-            console.log('Token v2==>', JSON.stringify(authState))
-            ondriveUser(authState.accessToken)
-        } catch (error) {
-            console.log(error);
-        }
-
 
     }
 
@@ -287,7 +254,7 @@ function AppAuthView(props) {
                     'Authorization': 'Bearer ' + token,
                     "Content-Type": "multipart/form-data"
                 },
-                body: 'data:image/jpeg;base64,' + base64,
+                body: image,
             });
             const result = await response.json();
             console.log('fileUpload res: ' + JSON.stringify(result));
@@ -307,26 +274,30 @@ function AppAuthView(props) {
         }
     }
     const upload = async () => {
-        const path = image.replace("file://", "");
-        const formData = [];
-        formData.push({
-            name: "photo",
-            filename: `photo.jpg`,
-            data: RNFetchBlob.wrap(path)
-        });
-        var url = 'https://graph.microsoft.com/v1.0/me/drive/items/01YP3BE5LFUJ5GRP4SPZGJZJCY3W4MGN7N:/' + imageName + ':/content'
-        let response = await RNFetchBlob.fetch(
-            "PUT",
-            url,
-            {
-                Accept: "application/json",
-                'Authorization': 'Bearer ' + accessToken,
-                "Content-Type": "multipart/form-data"
-            },
-            RNFetchBlob.wrap(path)
-        );
+        console.log('Image l==>', images.length)
+        setUploading(true)
+        var photoAppFolderID = '01YP3BE5PDD2QV4TVWOJH2BXNNI5CZKI6V:/';
+        var childFolderID = '01YP3BE5P77T47UAXC2FC3CE674TTZ3MKG:/';
+        for (const res of images) {
 
-        console.log('response===>', JSON.stringify(response))
+            const path = res.url.replace("file://", "");
+            var url = 'https://graph.microsoft.com/v1.0/me/drive/items/' + childFolderID + res.imageName + ':/content'
+            let response = await RNFetchBlob.fetch(
+                "PUT",
+                url,
+                {
+                    Accept: "application/json",
+                    'Authorization': 'Bearer ' + accessToken,
+                    "Content-Type": "multipart/form-data"
+                },
+                RNFetchBlob.wrap(path)
+            );
+            console.log('Image==>', res.url)
+            console.log('response===>', JSON.stringify(response))
+        }
+
+        setUploading(false)
+
     }
     const getSpecificFolderFiles = async (token, userId) => {
         console.log('getSpecificFolderFiles token: ' + token);
@@ -355,114 +326,15 @@ function AppAuthView(props) {
         }
     }
 
-    const b64toBlob = async (sliceSize) => {
-        // Convert Base64 data to Blob form and return
-        // contentType = contentType || '';
-        sliceSize = sliceSize || 512;
-
-        var byteCharacters = atob(base64);
-        var byteArrays = [];
-
-        for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-            var slice = byteCharacters.slice(offset, offset + sliceSize);
-
-            var byteNumbers = new Array(slice.length);
-            for (var i = 0; i < slice.length; i++) {
-                byteNumbers[i] = slice.charCodeAt(i);
-            }
-
-            var byteArray = new Uint8Array(byteNumbers);
-
-            byteArrays.push(byteArray);
-        }
-
-        var blob = new Blob(byteArrays, { type: imageType });
-        // const base64 = 'iVBORw0KGgoAAAANSUhEU ....'
-        // const buffer = Buffer.from(base64);
-
-        // const blob = new Blob([buffer], { type: 'image/jpeg' })
-
-        // var url = "data:image/jpeg;base64," + base64
-
-        // var url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=="
-
-        // const res = await fetch(url);
-        // var base642 = base64.split(';');
-        // let your_bytes = Buffer.from(base642, "base64");
-        // const blob = new Blob([your_bytes], { type: 'image/jpeg' })
-        // console.log('Blob==>', blob)
-
-        // const RNFS = require("react-native-fs");
-        // response.uri from react-native-camera
-        // RNFS.readFile(image, "base64").then(data => {
-        //     // binary data
-        //     console.log('RNFS==>', data);
-        // });
-        // const path = image.replace("file://", "");
-        // var blob = RNFetchBlob.wrap(path);
-        console.log('Rblob==>', blob);
-        callMsGraphFileUpload(accessToken, 'PhotoApp', imageName, blob)
-        // return blob;
-
-    }
-    const callMsGraphFileUpload = async (accessToken, parent_id, filename, blob) => {
-        /*
-        Uploads a file to user's OneDrive account
-        
-        PARAMS: 
-        accessToken, bearer token for connecting to Microsoft Graph
-        parent_id, id for parent folder ("PhotoApp")
-        filename, name for file being uploaded
-        blob, binary stream of file
-    
-        RETURN:
-        Promise, promise from call to MS Graph endpoint
-        
-        */
-
-        const headers = new Headers();
-        const bearer = `Bearer ${accessToken}`;
-
-        headers.append("Authorization", bearer);
-
-        const options = {
-            method: "PUT",
-            headers: headers,
-            body: blob
-        };
-
-
-        var graph_endpoint = graphConfig.graphMeItemUploadEndpoint.replace("PARENT_ID", parent_id).replace("FILE_NAME", filename);
-
-        // try {
-        //     const response = await fetch(graph_endpoint, options);
-        //     const result = await response.json();
-        //     console.log('callMsGraphFileUpload res: ' + JSON.stringify(result));
-        //     if (response.status == 200) {
-        //         // alert(result.token_type)
-        //         console.log('callMsGraphFileUpload: ' + JSON.stringify(result));
-        //         alert(JSON.stringify(result))
-        //     } else {
-        //         alert(JSON.stringify(result))
-        //     }
-        // } catch (error) {
-        //     console.log('callMsGraphFileUpload err: ' + JSON.stringify(error));
-        //     alert(error)
-
-        // }
-
-        return fetch(graph_endpoint, options)
-            .then(response => console.log('callMsGraphFileUpload==>', JSON.stringify(response.json())))
-            .catch(error => console.log(error))
-    }
-
     return (
-        <View>
+        <View style={{ flex: 1, width: '100%' }}>
             <Button title='Sign In' onPress={() => fetchTokenV1()} />
-            <Button title='pick image' onPress={() => pickSignleFile()} />
-            <Button title='Pick single file' onPress={() => imageGalleryLaunch()} />
-            <Button title='Upload file' onPress={() => fileUpload(accessToken)} />
-            <Button title='Upload file blob' onPress={() => upload()} />
+            <View style={{ margin: 10 }} />
+            {/* <Button title='pick image' onPress={() => pickSignleFile()} /> */}
+            <Button title='Pick Image' onPress={() => cameraLaunch()} />
+            {/* <Button title='Upload file' onPress={() => fileUpload(accessToken)} /> */}
+            <Image style={{ width: 200, height: 200, alignSelf: 'center' }} source={{ uri: image }} />
+            <Button title={uploading ? 'Uploading...' : 'Upload'} onPress={() => upload()} />
         </View>
     );
 }
