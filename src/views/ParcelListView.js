@@ -27,7 +27,7 @@ function ParcelListView(props) {
                 <View style={{ flex: 1, alignSelf: 'center', }}>
                     <TouchableOpacity
                         style={{ paddingHorizontal: 4, paddingVertical: 4, borderRadius: 4, borderColor: 'grey', borderWidth: 1 }}
-                        onPress={{}} >
+                        onPress={() => console.log('Click==>', address)} >
                         <Text style={{ color: 'grey', alignSelf: 'center', textTransform: 'capitalize', fontSize: 10 }}>{detail}</Text>
 
                     </TouchableOpacity>
