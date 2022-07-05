@@ -13,7 +13,6 @@ function MyDrawer() {
         <Drawer.Navigator drawerContent={props => <DrawerContent {...props} />} initialRouteName="CSV" useLegacyImplementation='false'>
             <Drawer.Screen name="CSV" component={CsvDownloadView} options={{ headerShown: true, title: 'CSV Download' }} />
             <Drawer.Screen name="Parcel" component={ParcelListView} options={{ headerShown: true, title: 'Parcel List' }} />
-
         </Drawer.Navigator>
 
 

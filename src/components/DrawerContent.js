@@ -32,19 +32,25 @@ function DrawerContent({ props, navigation }) {
                                 onPress={() => { }}
                             />
                         </Drawer.Section>
-                        <DrawerItem icon={({ color, size }) => (
-                            <Icon
-                                name='home-outline'
-                                color={color}
-                                size={size} />)}
+                        <DrawerItem
+                            activeTintColor='teal'
+                            activeBackgroundColor='teal'
+                            icon={({ color, size }) => (
+                                <Icon
+                                    name='download-outline'
+                                    color={color}
+                                    size={size} />)}
                             label='CSV Download'
                             onPress={() => { navigation.navigate('CSV') }}
                         />
-                        <DrawerItem icon={({ color, size }) => (
-                            <Icon
-                                name='account-outline'
-                                color={color}
-                                size={size} />)}
+                        <DrawerItem
+                            activeTintColor='teal'
+                            activeBackgroundColor='teal'
+                            icon={({ color, size }) => (
+                                <Icon
+                                    name='transfer'
+                                    color={color}
+                                    size={size} />)}
                             label='Parcel List'
                             onPress={() => { navigation.navigate('Parcel') }}
                         />

@@ -1,4 +1,6 @@
-import { StyleSheet } from "react-native";
+import { Dimensions, StyleSheet } from "react-native";
+
+const screen = Dimensions.get('window')
 
 export default StyleSheet.create({
     bottomCard: {
@@ -6,6 +8,12 @@ export default StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderRadius: 12,
+        marginTop: 8,
+    },
+    divider: {
+        backgroundColor: 'grey',
+        height: 1,
+        width: screen.width,
         marginTop: 8,
     },
     whiteText: {
@@ -27,9 +35,15 @@ export default StyleSheet.create({
 
 
     textInput: {
-        flex: 1,
-        // marginTop: Platform.OS === 'ios' ? 0 : -12,
-        // paddingLeft: 10,
+        width: screen.width * 0.6,
+        marginTop: Platform.OS === 'ios' ? 0 : -12,
+        paddingLeft: 10,
+        backgroundColor: "white",
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: 'grey',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
 
     },
     action: {
@@ -45,10 +59,10 @@ export default StyleSheet.create({
     },
 
     container: {
+        alignItems: 'flex-start',
+        paddingVertical: 24,
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#222831'
+        backgroundColor: 'white'
     },
     mainContainer: {
         flex: 1,
