@@ -59,8 +59,9 @@ export default StyleSheet.create({
     },
 
     container: {
+        width: screen.width,
         alignItems: 'flex-start',
-        paddingVertical: 24,
+        paddingVertical: 16,
         flex: 1,
         backgroundColor: 'white'
     },
