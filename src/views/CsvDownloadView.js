@@ -6,14 +6,20 @@ import { getData, storeData } from '../constants/helperFunction';
 import DocumentPicker from 'react-native-document-picker';
 import XLSX from 'xlsx'
 import RNFetchBlob from 'rn-fetch-blob'
+import { useDispatch, useSelector } from 'react-redux';
+import { GET_DATA } from '../constants/types';
+import { readCsvData } from '../redux/actions/apiActions';
 
 const screen = Dimensions.get('window')
 const csvFilePath = 'https://clearpathinnovations-my.sharepoint.com/personal/testuser_cpimobile_com/_layouts/15/Doc.aspx?sourcedoc=%7B1AF9FDC0-38A1-4CB0-AA63-DC4B6D8CC3E0%7D&file=test%20list.csv'
 var addressList = [{ id: '1', address: 'naya' }]
 
 function CsvDownloadView(props) {
+    const dispatch = useDispatch()
+    const getCsvData = (csvFile) => dispatch(readCsvData(csvFile))
     const [csvFileName, onCsvFileName] = useState("");
     const [csvAddress, setCsvAddress] = useState([]);
+    const { csvDataList, status } = useSelector((state) => state.csvData)
 
 
     useEffect(() => {
@@ -21,30 +27,42 @@ function CsvDownloadView(props) {
     }, []);
 
     const readCsvFile = (csvFile) => {
-        readFile(csvFile, 'ascii')
-            .then(res => {
-                const wb = XLSX.read(res, { type: 'binary' })
-                const wsname = wb.SheetNames[0]
-                const ws = wb.Sheets[wsname]
-                const data = XLSX.utils.sheet_to_json(ws, { header: 1 })
-                var temp = []
-                storeData('csv_address', '')
-                for (let i = 1; i < data.length; ++i) {
-                    temp.push({
-                        id: data[i][0],
-                        address: data[i][1],
-                        details: 'Take New Photo',
-                        process: '2',
-                        status: i % 2 == 0 ? 'Yes' : 'No'
-                    })
-                }
-                setCsvAddress(temp)
-                addressList = temp
-                console.log('csv===>', JSON.stringify(temp))
-                console.log('csv address size===>', addressList.length)
-                storeData('csv_address', JSON.stringify(addressList))
+        getCsvData(csvFile)
 
-            })
+        // readFile(csvFile, 'ascii')
+        //     .then(res => {
+        //         const wb = XLSX.read(res, { type: 'binary' })
+        //         const wsname = wb.SheetNames[0]
+        //         const ws = wb.Sheets[wsname]
+        //         const data = XLSX.utils.sheet_to_json(ws, { header: 1 })
+        //         var temp = []
+        //         storeData('csv_address', '')
+        //         for (let i = 1; i < data.length; ++i) {
+        //             temp.push({
+        //                 id: data[i][0],
+        //                 address: data[i][1],
+        //                 propertyClass: data[i][3],
+        //                 buildStyle: data[i][4],
+        //                 details: 'Take New Photo',
+        //                 process: '2',
+        //                 status: i % 2 == 0 ? 'Yes' : 'No'
+        //             })
+        //         }
+        //         setCsvAddress(temp)
+        //         addressList = temp
+
+        //         dispatch({
+        //             type: GET_DATA,
+        //             payload: addressList,
+        //             status: 'success'
+        //         })
+
+        //         console.log('csv===>', JSON.stringify(temp))
+        //         console.log('csv address size===>', addressList.length)
+        //         storeData('csv_address', JSON.stringify(addressList))
+
+        //     })
+
     }
 
     const readCsvFromGallery = async () => {
@@ -66,6 +84,8 @@ function CsvDownloadView(props) {
                         temp.push({
                             id: data[i][0],
                             address: data[i][1],
+                            propertyClass: data[i][3],
+                            buildStyle: data[i][4],
                             details: 'Take New Photo',
                             process: '2',
                             status: i % 2 == 0 ? 'Yes' : 'No'
@@ -218,15 +238,20 @@ function CsvDownloadView(props) {
 
     }
 
-    const ChildGrid = (id, address) => {
+    const ChildGrid = (address, id, propertyClass, buildStyle) => {
         return (
-            <View style={{ flexDirection: 'row', backgroundColor: 'white', width: screen.width, marginVertical: 4 }}>
+            <View style={{ flexDirection: 'row', backgroundColor: 'white', width: screen.width, marginVertical: 4, paddingHorizontal: 4 }}>
+                <View style={{ flex: 1, alignSelf: 'center', }}>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{address}</Text>
+                </View>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
                     <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{id}</Text>
                 </View>
-
                 <View style={{ flex: 1, alignSelf: 'center', }}>
-                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{address}</Text>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{propertyClass}</Text>
+                </View>
+                <View style={{ flex: 1, alignSelf: 'center', }}>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{buildStyle}</Text>
                 </View>
 
             </View>
@@ -235,7 +260,27 @@ function CsvDownloadView(props) {
 
     const ListViewGrid = () => {
         return (
-            <FlatList keyExtractor={item => item.id} data={csvAddress} renderItem={({ item }) => ChildGrid(item.id, item.address)} />
+            <FlatList keyExtractor={item => item.id} data={csvDataList} renderItem={({ item }) => ChildGrid(item.address, item.id, item.propertyClass, item.buildStyle)} />
+        )
+    }
+
+    const BuildTable = () => {
+        return (
+            <View style={{ flexDirection: 'row', height: 24, }}>
+                <View style={{ flex: 1, alignSelf: 'center', }}>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 10 }}>Address</Text>
+                </View>
+                <View style={{ flex: 1, alignSelf: 'center', }}>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 10 }}>percel_id</Text>
+                </View>
+                <View style={{ flex: 1, alignSelf: 'center', }}>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 10 }}>property_class</Text>
+                </View>
+                <View style={{ flex: 1, alignSelf: 'center', }}>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 10 }}>build_style</Text>
+                </View>
+
+            </View>
         )
     }
 
@@ -260,7 +305,8 @@ function CsvDownloadView(props) {
                 <Text>Download</Text>
 
             </TouchableOpacity>
-            {csvAddress.length > 0 ? ListViewGrid() : <Text style={{ alignSelf: 'center' }}>There are no records to display</Text>}
+            {csvDataList.length > 0 ? BuildTable() : null}
+            {csvDataList.length > 0 ? ListViewGrid() : <Text style={{ alignSelf: 'center' }}>There are no records to display</Text>}
         </View>
     );
 }

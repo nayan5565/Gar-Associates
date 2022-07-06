@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { SafeAreaView, TouchableOpacity, Text, TextInput, View, Dimensions, FlatList } from 'react-native';
 import GlobalStyle from '../constants/GlobalStyle';
 import { getData } from '../constants/helperFunction';
+import { useDispatch, useSelector } from 'react-redux';
+
 
 const screen = Dimensions.get('window')
 
@@ -18,16 +20,17 @@ const screen = Dimensions.get('window')
 
 function ParcelListView(props) {
     const [list, setList] = useState([]);
+    const { csvDataList, status } = useSelector((state) => state.csvData)
 
     useEffect(() => {
         fetchAddress()
     }, []);
 
     const fetchAddress = async () => {
-        var addressList = await getData('csv_address')
-        setList(addressList)
-        console.log('Fetch===>', list)
-        console.log('List Size==>', list.length)
+        // var addressList = await getData('csv_address')
+        // setList(addressList)
+        console.log('Fetch===>', csvDataList)
+        console.log('List Size==>', csvDataList.length)
     }
 
     const ChildGrid = (address, detail, process, uploaded) => {
@@ -57,7 +60,7 @@ function ParcelListView(props) {
     const ListViewGrid = () => {
 
         return (
-            <FlatList keyExtractor={item => item.id} data={list} renderItem={({ item }) => ChildGrid(item.address, item.details, item.process, item.status)} />
+            <FlatList keyExtractor={item => item.id} data={csvDataList} renderItem={({ item }) => ChildGrid(item.address, item.details, item.process, item.status)} />
         )
     }
 
