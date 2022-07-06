@@ -1,22 +1,34 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SafeAreaView, TouchableOpacity, Text, TextInput, View, Dimensions, FlatList } from 'react-native';
 import GlobalStyle from '../constants/GlobalStyle';
+import { getData } from '../constants/helperFunction';
 
 const screen = Dimensions.get('window')
 
-const list = [
-    { id: 1, address: 'Adress 1', details: 'Take New Photo', process: '2', status: 'Yes' },
-    { id: 2, address: 'Adress 2', details: 'Take New Photo', process: '0', status: 'No' },
-    { id: 3, address: 'Adress 3', details: 'Take New Photo', process: '0', status: 'Yes' },
-    { id: 4, address: 'Adress 4', details: 'Take New Photo', process: '0', status: 'No' },
-    { id: 5, address: 'Adress 5', details: 'Take New Photo', process: '1', status: 'Yes' },
-    { id: 6, address: 'Adress 6', details: 'Take New Photo', process: '0', status: 'No' },
-    { id: 7, address: 'Adress 7', details: 'Take New Photo', process: '0', status: 'Yes' },
-    { id: 8, address: 'Adress 8', details: 'Take New Photo', process: '0', status: 'No' }
-]
+// const list = [
+//     { id: 1, address: 'Adress 1', details: 'Take New Photo', process: '2', status: 'Yes' },
+//     { id: 2, address: 'Adress 2', details: 'Take New Photo', process: '0', status: 'No' },
+//     { id: 3, address: 'Adress 3', details: 'Take New Photo', process: '0', status: 'Yes' },
+//     { id: 4, address: 'Adress 4', details: 'Take New Photo', process: '0', status: 'No' },
+//     { id: 5, address: 'Adress 5', details: 'Take New Photo', process: '1', status: 'Yes' },
+//     { id: 6, address: 'Adress 6', details: 'Take New Photo', process: '0', status: 'No' },
+//     { id: 7, address: 'Adress 7', details: 'Take New Photo', process: '0', status: 'Yes' },
+//     { id: 8, address: 'Adress 8', details: 'Take New Photo', process: '0', status: 'No' }
+// ]
 
 function ParcelListView(props) {
+    const [list, setList] = useState([]);
 
+    useEffect(() => {
+        fetchAddress()
+    }, []);
+
+    const fetchAddress = async () => {
+        var addressList = await getData('csv_address')
+        setList(addressList)
+        console.log('Fetch===>', list)
+        console.log('List Size==>', list.length)
+    }
 
     const ChildGrid = (address, detail, process, uploaded) => {
         return (
@@ -43,7 +55,7 @@ function ParcelListView(props) {
     }
 
     const ListViewGrid = () => {
-        console.log('Size==>', list.length)
+
         return (
             <FlatList keyExtractor={item => item.id} data={list} renderItem={({ item }) => ChildGrid(item.address, item.details, item.process, item.status)} />
         )

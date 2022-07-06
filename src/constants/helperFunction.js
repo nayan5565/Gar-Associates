@@ -22,9 +22,9 @@ export {
     showSuccess
 }
 
-export const storeData = async (value) => {
+export const storeData = async (key, value) => {
     try {
-        await AsyncStorage.setItem('token', value)
+        await AsyncStorage.setItem(key, value)
     } catch (e) {
         console.log('store err==>', e)
         // saving error

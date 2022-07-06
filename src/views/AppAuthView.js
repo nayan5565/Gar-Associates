@@ -7,6 +7,9 @@ import { CLIENT_ID, TENANT_ID, REDIRECT_URL, REACT_SINGLE_APP_TENANT_ID, REACT_S
 import { graphConfig } from '../constants/authConfig';
 import RNFetchBlob from 'rn-fetch-blob'
 import { getData } from '../constants/helperFunction';
+
+// const { fetch } = RNFetchBlob
+
 const images = [];
 function AppAuthView(props) {
     const [image, setImage] = useState();

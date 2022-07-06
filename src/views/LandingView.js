@@ -32,7 +32,7 @@ class LandingView extends Component {
         try {
             const authState = await authorize(config);
             this.setState({ isLogin: false });
-            await storeData(authState.accessToken)
+            await storeData('token', authState.accessToken)
             // console.log('Login res==>', JSON.stringify(authState))
             this.props.navigation.navigate('Home')
         } catch (error) {
