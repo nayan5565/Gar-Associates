@@ -29,7 +29,7 @@ function ParcelListView(props) {
     const [uploading, setUploading] = useState(false);
     const [allUpdated, setAllUploaded] = useState(false);
     const [fileUploadNumber, setFileUploadNumber] = useState(1);
-    // const [address, setAddress] = useState('');
+    const [itemIndex, setItemIndex] = useState(0);
     // const [imageList, setImageList] = useState([]);
     var images = [];
 
@@ -93,14 +93,55 @@ function ParcelListView(props) {
     //     }
     // }
 
-    const upload = async () => {
+    const createFile = async () => {
         setAllUploaded(false)
+        setUploading(true)
+        setFileUploadNumber(1)
+        var token = await getData('token')
+        // console.log('createFile token: ' + token);
+        var rootUrl = 'https://graph.microsoft.com/v1.0/me/drive/root/children'
+        var photoappUrl = 'https://graph.microsoft.com/v1.0/me/drive/root:/photoapp:/children'
+
+        var raw = JSON.stringify({
+            "name": "Nayan",
+            "folder": {},
+
+        });
+        try {
+            const response = await fetch(photoappUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                body: raw,
+            });
+            const result = await response.json();
+            console.log('createFile res: ' + response.status);
+            if (response.status == 201) {
+                console.log('createFile: ' + JSON.stringify(result));
+                // alert(createdFolerId)
+                upload(result.id)
+            } else {
+                alert(JSON.stringify(result))
+            }
+        } catch (error) {
+            console.log('createFile err: ' + JSON.stringify(error));
+            alert(error)
+
+        }
+    }
+
+    const upload = async (createdFolerId) => {
+
         var accessToken = await getData('token')
         console.log('Image l==>', imageList.length)
         // console.log('upload token==>', accessToken)
-        setUploading(true)
+
         var photoAppFolderID = '01YP3BE5PDD2QV4TVWOJH2BXNNI5CZKI6V:/';
         var childFolderID = '01YP3BE5P77T47UAXC2FC3CE674TTZ3MKG:/';
+        var newFolderId = createdFolerId + ':/'
+        console.log('folderID==>', newFolderId)
         var number = 1;
         var imageName = '';
         for (const res of imageList) {
@@ -110,7 +151,7 @@ function ParcelListView(props) {
             else imageName = selectAddress + extc
             console.log('Image name==>', imageName)
             const path = res.url.replace("file://", "");
-            var url = 'https://graph.microsoft.com/v1.0/me/drive/items/' + childFolderID + imageName + ':/content'
+            var url = 'https://graph.microsoft.com/v1.0/me/drive/items/' + newFolderId + imageName + ':/content'
             let response = await RNFetchBlob.fetch(
                 "PUT",
                 url,
@@ -124,12 +165,22 @@ function ParcelListView(props) {
             console.log('Image==>', res.url)
             console.log('response===>', JSON.stringify(response))
             number++;
+
+
             setFileUploadNumber(number)
         }
 
+
+        var item = {
+            ...csvDataList[itemIndex],
+            status: 'Yes'
+        }
+        csvDataList[itemIndex] = item
+        console.log('Change index', itemIndex)
+        console.log('Change data', csvDataList[itemIndex])
         setUploading(false)
         setAllUploaded(true)
-
+        alert('All image successfully uploaded')
     }
 
     const ChildView = (item, index) => {
@@ -141,7 +192,7 @@ function ParcelListView(props) {
                 <View style={{ flex: 1, alignSelf: 'center', }}>
                     <TouchableOpacity
                         style={{ paddingHorizontal: 4, paddingVertical: 4, borderRadius: 4, borderColor: 'grey', borderWidth: 1 }}
-                        onPress={() => fetchImageList(item, index)} >
+                        onPress={() => { fetchImageList(item, index), setItemIndex(index) }} >
                         <Text style={{ color: 'grey', alignSelf: 'center', textTransform: 'capitalize', fontSize: 10 }}>{item.details}</Text>
 
                     </TouchableOpacity>
@@ -202,13 +253,13 @@ function ParcelListView(props) {
                 <View style={{ alignItems: 'flex-end' }}>
                     <TouchableOpacity
                         style={{ marginLeft: 8, backgroundColor: '#5d9cec', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 4 }}
-                        onPress={() => upload()} >
+                        onPress={() => createFile()} >
                         {uploading ? allUpdated ? null : UploadingText() : <Text style={{ color: 'white', alignSelf: 'center', textTransform: 'uppercase' }}>Upload Photos</Text>}
 
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={{ marginLeft: 8, marginTop: 8, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#5d9cec', padding: 8, borderRadius: 4 }}
-                        onPress={{}} >
+                        onPress={() => createFile()} >
                         <Text style={{ color: 'white', alignSelf: 'center', textTransform: 'uppercase' }}>Upload CSV</Text>
 
                     </TouchableOpacity>

@@ -252,8 +252,6 @@ function AppAuthView(props) {
             console.log('createFile err: ' + JSON.stringify(error));
             alert(error)
 
-        } finally {
-            // setLoading(false);
         }
     }
 
