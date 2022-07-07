@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ItemDivider, Loader, VerticalGap } from '../constants/CustomWidget';
 import RNFetchBlob from 'rn-fetch-blob';
 import DocumentPicker from 'react-native-document-picker';
-import { getData } from '../constants/helperFunction';
+import { getData, storeData } from '../constants/helperFunction';
 import { pickMultipleFile } from '../redux/actions/apiActions';
 
 
@@ -103,7 +103,7 @@ function ParcelListView(props) {
         var photoappUrl = 'https://graph.microsoft.com/v1.0/me/drive/root:/photoapp:/children'
 
         var raw = JSON.stringify({
-            "name": "Nayan",
+            "name": "address list 8",
             "folder": {},
 
         });
@@ -121,13 +121,30 @@ function ParcelListView(props) {
             if (response.status == 201) {
                 console.log('createFile: ' + JSON.stringify(result));
                 // alert(createdFolerId)
+                storeData('newFolderID', result.id)
                 upload(result.id)
             } else {
-                alert(JSON.stringify(result))
+                var folderID = await getData('newFolderID')
+                if (folderID == 'No Data') {
+                    setAllUploaded(false)
+                    setUploading(false)
+                    alert(JSON.stringify(result))
+                } else {
+                    upload(folderID)
+                }
+
             }
         } catch (error) {
-            console.log('createFile err: ' + JSON.stringify(error));
-            alert(error)
+            var folderID = await getData('newFolderID')
+            if (folderID == 'No Data') {
+                setAllUploaded(false)
+                setUploading(false)
+                console.log('createFile err: ' + JSON.stringify(error));
+                alert(error)
+            } else {
+                upload(folderID)
+            }
+
 
         }
     }
@@ -185,7 +202,7 @@ function ParcelListView(props) {
 
     const ChildView = (item, index) => {
         return (
-            <View style={{ flexDirection: 'row', width: screen.width, marginVertical: 4 }}>
+            <View style={{ flexDirection: 'row', width: screen.width, marginVertical: 4, paddingHorizontal: 6, }}>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
                     <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{item.address}</Text>
                 </View>
