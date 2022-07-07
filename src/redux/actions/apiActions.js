@@ -53,7 +53,7 @@ export const readCsvData = (csvFile) => {
     }
 }
 
-export const pickMultipleFile = (pickAddress, itemData, index) => {
+export const pickMultipleFile = (itemData, index) => {
 
     try {
         return async dispatch => {
@@ -87,7 +87,7 @@ export const pickMultipleFile = (pickAddress, itemData, index) => {
             dispatch({
                 type: PICK_MULTIPLE_IMAGE,
                 payload: pickImage,
-                selectAddress: pickAddress,
+                selectAddress: item.address,
                 index: index,
                 item: item,
                 imageStatus: 'success'

@@ -24,7 +24,7 @@ const screen = Dimensions.get('window')
 
 function ParcelListView(props) {
     const dispatch = useDispatch()
-    const fetchImageList = (pickAddress, itemData, index) => dispatch(pickMultipleFile(pickAddress, itemData, index))
+    const fetchImageList = (itemData, index) => dispatch(pickMultipleFile(itemData, index))
     const { csvDataList, status, imageList, selectAddress } = useSelector((state) => state.csvData)
     const [uploading, setUploading] = useState(false);
     const [allUpdated, setAllUploaded] = useState(false);
@@ -132,25 +132,25 @@ function ParcelListView(props) {
 
     }
 
-    const ChildView = (address, detail, process, uploaded, item, index) => {
+    const ChildView = (item, index) => {
         return (
             <View style={{ flexDirection: 'row', width: screen.width, marginVertical: 4 }}>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
-                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{address}</Text>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{item.address}</Text>
                 </View>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
                     <TouchableOpacity
                         style={{ paddingHorizontal: 4, paddingVertical: 4, borderRadius: 4, borderColor: 'grey', borderWidth: 1 }}
-                        onPress={() => fetchImageList(address, item, index)} >
-                        <Text style={{ color: 'grey', alignSelf: 'center', textTransform: 'capitalize', fontSize: 10 }}>{detail}</Text>
+                        onPress={() => fetchImageList(item, index)} >
+                        <Text style={{ color: 'grey', alignSelf: 'center', textTransform: 'capitalize', fontSize: 10 }}>{item.details}</Text>
 
                     </TouchableOpacity>
                 </View>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
-                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{process}</Text>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{item.process}</Text>
                 </View>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
-                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{uploaded}</Text>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{item.status}</Text>
                 </View>
             </View>
         )
@@ -159,7 +159,7 @@ function ParcelListView(props) {
     const ListView = () => {
 
         return (
-            <FlatList keyExtractor={item => item.id} ItemSeparatorComponent={ItemDivider} data={csvDataList} renderItem={({ item, index }) => ChildView(item.address, item.details, item.process, item.status, item, index)} />
+            <FlatList keyExtractor={item => item.id} ItemSeparatorComponent={ItemDivider} data={csvDataList} renderItem={({ item, index }) => ChildView(item, index)} />
         )
     }
 
