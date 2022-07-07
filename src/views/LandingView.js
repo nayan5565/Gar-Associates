@@ -5,7 +5,7 @@ import imagePath from '../constants/imagePath';
 import { authorize } from 'react-native-app-auth';
 import { CLIENT_ID, MOBILE_REDIRECT_URL3 } from '../constants/one_drive_credential';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getData, showSuccess, storeData } from '../constants/helperFunction';
+import { storeData } from '../constants/helperFunction';
 
 const screen = Dimensions.get('window')
 

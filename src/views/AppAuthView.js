@@ -8,7 +8,7 @@ import { graphConfig } from '../constants/authConfig';
 import RNFetchBlob from 'rn-fetch-blob'
 import { getData } from '../constants/helperFunction';
 
-// const { fetch } = RNFetchBlob
+// const { config } = RNFetchBlob
 
 const images = [];
 function AppAuthView(props) {

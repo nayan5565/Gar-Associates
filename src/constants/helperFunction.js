@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { PermissionsAndroid, Platform } from "react-native";
+
 import { showMessage } from "react-native-flash-message";
 
 const showError = (msg) => {

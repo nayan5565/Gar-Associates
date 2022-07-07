@@ -11,7 +11,7 @@ export default StyleSheet.create({
         marginTop: 8,
     },
     divider: {
-        backgroundColor: 'grey',
+        backgroundColor: '#6c757d',
         height: 1,
         width: screen.width,
         marginTop: 8,
@@ -37,13 +37,13 @@ export default StyleSheet.create({
     textInput: {
         width: screen.width * 0.6,
         marginTop: Platform.OS === 'ios' ? 0 : -12,
-        paddingLeft: 10,
+
         backgroundColor: "white",
         borderRadius: 8,
         borderWidth: 1,
         borderColor: 'grey',
         paddingHorizontal: 16,
-        paddingVertical: 10,
+        paddingVertical: 7,
 
     },
     action: {

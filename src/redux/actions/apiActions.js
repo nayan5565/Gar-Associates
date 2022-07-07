@@ -1,7 +1,8 @@
 import { readFile } from "react-native-fs";
 import { storeData } from "../../constants/helperFunction";
-import { GET_DATA } from "../../constants/types";
+import { GET_DATA, PICK_MULTIPLE_IMAGE } from "../../constants/types";
 import XLSX from 'xlsx'
+import DocumentPicker from 'react-native-document-picker';
 
 
 export const readCsvData = (csvFile) => {
@@ -48,6 +49,56 @@ export const readCsvData = (csvFile) => {
                 type: GET_DATA,
                 status: 'error'
             })
+        }
+    }
+}
+
+export const pickMultipleFile = (pickAddress) => {
+
+    try {
+        return async dispatch => {
+            const results = await DocumentPicker.pickMultiple({
+                type: [DocumentPicker.types.images],
+                allowMultiSelection: true
+            });
+            console.log(
+                'PickImage===>', JSON.stringify(results)
+            );
+
+
+            var pickImage = [];
+            for (const res of results) {
+                var track = {
+                    url: res.uri,
+                    imageName: res.name,
+                    imageType: res.type,
+                };
+                console.log(
+                    'PickImage add===>', res.uri
+                );
+                pickImage.push(track)
+
+            }
+            dispatch({
+                type: PICK_MULTIPLE_IMAGE,
+                payload: pickImage,
+                selectAddress: pickAddress,
+                imageStatus: 'success'
+            })
+
+        }
+    } catch (err) {
+        if (DocumentPicker.isCancel(err)) {
+            dispatch({
+                type: PICK_MULTIPLE_IMAGE,
+                imageStatus: 'User Cancel'
+            })
+        } else {
+            dispatch({
+                type: PICK_MULTIPLE_IMAGE,
+                imageStatus: err
+            })
+            throw err;
         }
     }
 }

@@ -7,18 +7,18 @@ import DocumentPicker from 'react-native-document-picker';
 import XLSX from 'xlsx'
 import RNFetchBlob from 'rn-fetch-blob'
 import { useDispatch, useSelector } from 'react-redux';
-import { GET_DATA } from '../constants/types';
 import { readCsvData } from '../redux/actions/apiActions';
+import { ItemDivider, Loader } from '../constants/CustomWidget';
 
 const screen = Dimensions.get('window')
 const csvFilePath = 'https://clearpathinnovations-my.sharepoint.com/personal/testuser_cpimobile_com/_layouts/15/Doc.aspx?sourcedoc=%7B1AF9FDC0-38A1-4CB0-AA63-DC4B6D8CC3E0%7D&file=test%20list.csv'
-var addressList = [{ id: '1', address: 'naya' }]
+
 
 function CsvDownloadView(props) {
     const dispatch = useDispatch()
     const getCsvData = (csvFile) => dispatch(readCsvData(csvFile))
     const [csvFileName, onCsvFileName] = useState("");
-    const [csvAddress, setCsvAddress] = useState([]);
+    const [downloading, setDownloading] = useState(false);
     const { csvDataList, status } = useSelector((state) => state.csvData)
 
 
@@ -91,10 +91,7 @@ function CsvDownloadView(props) {
                             status: i % 2 == 0 ? 'Yes' : 'No'
                         })
                     }
-                    setCsvAddress(temp)
-                    addressList = temp
-                    console.log('csv===>', JSON.stringify(temp))
-                    console.log('csv address size===>', addressList.length)
+
                     storeData('csv_address', JSON.stringify(addressList))
 
                 })
@@ -109,6 +106,7 @@ function CsvDownloadView(props) {
     }
 
     const fetchDownloadUrl = async () => {
+        setDownloading(true)
         var token = await getData('token')
         console.log('fileDownload token: ' + token);
         var fileName = csvFileName
@@ -125,11 +123,13 @@ function CsvDownloadView(props) {
                 // alert(result.token_type)
                 console.log('fileDownload: ' + JSON.stringify(result['@microsoft.graph.downloadUrl']));
                 var url = result['@microsoft.graph.downloadUrl']
-                downloadImage(url)
+                downloadFile(url)
             } else {
+                setDownloading(false)
                 alert(JSON.stringify(result))
             }
         } catch (error) {
+            setDownloading(false)
             console.log('fileDownload err: ' + JSON.stringify(error));
             alert(error)
 
@@ -186,7 +186,7 @@ function CsvDownloadView(props) {
         }
     }
 
-    const downloadImage = (imgUrl) => {
+    const downloadFile = (fileUrl) => {
         // setLoading(true)
         // setImage('')
         // setErrMsg('')
@@ -195,7 +195,7 @@ function CsvDownloadView(props) {
         // let newImgUri = imgUrl.lastIndexOf('/');
         // let imageName = imgUrl.substring(newImgUri);
         let fileName = '/' + csvFileName;
-        console.log('Download url==>', imgUrl)
+        console.log('Download url==>', fileUrl)
         console.log('imageName==>', fileName)
 
         let dirs = RNFetchBlob.fs.dirs;
@@ -214,7 +214,7 @@ function CsvDownloadView(props) {
             // },
 
         })
-            .fetch("GET", imgUrl, {
+            .fetch("GET", fileUrl, {
 
             })
             .then((res) => {
@@ -226,10 +226,10 @@ function CsvDownloadView(props) {
                 console.log(res, 'end downloaded')
                 alert('CSV Download Complete')
                 readCsvFile(res.data)
+                setDownloading(false)
             })
             .catch((errorMessage, statusCode) => {
-                // setLoading(false)
-                // setErrMsg('something wrong')
+                setDownloading(false)
                 console.log('errorMessage==>', errorMessage)
             })
 
@@ -238,29 +238,31 @@ function CsvDownloadView(props) {
 
     }
 
-    const ChildGrid = (address, id, propertyClass, buildStyle) => {
+    const ChildView = (address, id, propertyClass, buildStyle) => {
         return (
             <View style={{ flexDirection: 'row', backgroundColor: 'white', width: screen.width, marginVertical: 4, paddingHorizontal: 4 }}>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
-                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{address}</Text>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 11 }}>{address}</Text>
                 </View>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
-                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{id}</Text>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 11 }}>{id}</Text>
                 </View>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
-                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{propertyClass}</Text>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 11 }}>{propertyClass}</Text>
                 </View>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
-                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{buildStyle}</Text>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 11 }}>{buildStyle}</Text>
                 </View>
 
             </View>
+
         )
     }
 
-    const ListViewGrid = () => {
+
+    const ListView = () => {
         return (
-            <FlatList keyExtractor={item => item.id} data={csvDataList} renderItem={({ item }) => ChildGrid(item.address, item.id, item.propertyClass, item.buildStyle)} />
+            <FlatList keyExtractor={item => item.id} ItemSeparatorComponent={ItemDivider} data={csvDataList} renderItem={({ item }) => ChildView(item.address, item.id, item.propertyClass, item.buildStyle)} />
         )
     }
 
@@ -286,8 +288,8 @@ function CsvDownloadView(props) {
 
     return (
         <View style={GlobalStyle.container}>
-            <Text style={{ paddingHorizontal: 8 }}>Parcel Data Present - Downloading New CSV Will Replace Current Data</Text>
-            <View style={GlobalStyle.divider} />
+            <Text style={{ paddingHorizontal: 8, marginBottom: 8 }}>Parcel Data Present - Downloading New CSV Will Replace Current Data</Text>
+            {ItemDivider()}
             <View style={{ flexDirection: 'row', marginTop: 32, paddingHorizontal: 8 }}>
                 <Text style={{ marginRight: 12, color: '#656565', fontWeight: '400' }}>Download CSV</Text>
                 <TextInput
@@ -300,13 +302,14 @@ function CsvDownloadView(props) {
                 />
             </View>
             <TouchableOpacity
-                style={[GlobalStyle.signinStyle, { marginLeft: 8 }]}
+                style={[GlobalStyle.signinStyle, { marginLeft: 8, marginTop: 8 }]}
                 onPress={() => callFileDownload()} >
-                <Text>Download</Text>
+                <Text >{downloading ? 'Downloading...' : 'Download'}</Text>
 
             </TouchableOpacity>
             {csvDataList.length > 0 ? BuildTable() : null}
-            {csvDataList.length > 0 ? ListViewGrid() : <Text style={{ alignSelf: 'center' }}>There are no records to display</Text>}
+            {csvDataList.length > 0 ? ItemDivider() : null}
+            {csvDataList.length > 0 ? ListView() : <Text style={{ alignSelf: 'center' }}>There are no records to display</Text>}
         </View>
     );
 }
