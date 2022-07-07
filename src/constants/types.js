@@ -1,2 +1,3 @@
 export const GET_DATA = 'GET_DATA';
+export const ADDRESS_ITEM_UPDATE = 'GET_DATA';
 export const PICK_MULTIPLE_IMAGE = 'PICK_MULTIPLE_IMAGE';

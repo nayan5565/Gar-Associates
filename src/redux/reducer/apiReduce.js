@@ -14,7 +14,9 @@ const apiReducer = (state = INITIAL_STATE, action) => {
         case GET_DATA:
             return { ...state, csvDataList: action.payload, status: action.status }
         case PICK_MULTIPLE_IMAGE:
-            return { ...state, imageList: action.payload, imageStatus: action.imageStatus, selectAddress: action.selectAddress }
+            let newList = [...state.csvDataList]
+            newList[action.index] = action.item
+            return { ...state, imageList: action.payload, imageStatus: action.imageStatus, selectAddress: action.selectAddress, csvDataList: newList }
 
         default:
             return state

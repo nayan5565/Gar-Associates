@@ -23,8 +23,8 @@ export const readCsvData = (csvFile) => {
                             propertyClass: data[i][3],
                             buildStyle: data[i][4],
                             details: 'Take New Photo',
-                            process: i % 2 == 0 ? '2' : '0',
-                            status: i % 2 == 0 ? 'Yes' : 'No'
+                            process: '0',
+                            status: ''
                         })
                     }
 
@@ -53,7 +53,7 @@ export const readCsvData = (csvFile) => {
     }
 }
 
-export const pickMultipleFile = (pickAddress) => {
+export const pickMultipleFile = (pickAddress, itemData, index) => {
 
     try {
         return async dispatch => {
@@ -79,10 +79,17 @@ export const pickMultipleFile = (pickAddress) => {
                 pickImage.push(track)
 
             }
+            var item = {
+                ...itemData,
+                process: pickImage.length,
+                status: 'No'
+            }
             dispatch({
                 type: PICK_MULTIPLE_IMAGE,
                 payload: pickImage,
                 selectAddress: pickAddress,
+                index: index,
+                item: item,
                 imageStatus: 'success'
             })
 

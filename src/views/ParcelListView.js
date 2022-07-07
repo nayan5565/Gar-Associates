@@ -24,7 +24,7 @@ const screen = Dimensions.get('window')
 
 function ParcelListView(props) {
     const dispatch = useDispatch()
-    const fetchImageList = (pickAddress) => dispatch(pickMultipleFile(pickAddress))
+    const fetchImageList = (pickAddress, itemData, index) => dispatch(pickMultipleFile(pickAddress, itemData, index))
     const { csvDataList, status, imageList, selectAddress } = useSelector((state) => state.csvData)
     const [uploading, setUploading] = useState(false);
     const [allUpdated, setAllUploaded] = useState(false);
@@ -132,7 +132,7 @@ function ParcelListView(props) {
 
     }
 
-    const ChildView = (address, detail, process, uploaded) => {
+    const ChildView = (address, detail, process, uploaded, item, index) => {
         return (
             <View style={{ flexDirection: 'row', width: screen.width, marginVertical: 4 }}>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
@@ -141,7 +141,7 @@ function ParcelListView(props) {
                 <View style={{ flex: 1, alignSelf: 'center', }}>
                     <TouchableOpacity
                         style={{ paddingHorizontal: 4, paddingVertical: 4, borderRadius: 4, borderColor: 'grey', borderWidth: 1 }}
-                        onPress={() => fetchImageList(address)} >
+                        onPress={() => fetchImageList(address, item, index)} >
                         <Text style={{ color: 'grey', alignSelf: 'center', textTransform: 'capitalize', fontSize: 10 }}>{detail}</Text>
 
                     </TouchableOpacity>
@@ -159,7 +159,7 @@ function ParcelListView(props) {
     const ListView = () => {
 
         return (
-            <FlatList keyExtractor={item => item.id} ItemSeparatorComponent={ItemDivider} data={csvDataList} renderItem={({ item }) => ChildView(item.address, item.details, item.process, item.status)} />
+            <FlatList keyExtractor={item => item.id} ItemSeparatorComponent={ItemDivider} data={csvDataList} renderItem={({ item, index }) => ChildView(item.address, item.details, item.process, item.status, item, index)} />
         )
     }
 

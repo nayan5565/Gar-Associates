@@ -87,8 +87,8 @@ function CsvDownloadView(props) {
                             propertyClass: data[i][3],
                             buildStyle: data[i][4],
                             details: 'Take New Photo',
-                            process: '2',
-                            status: i % 2 == 0 ? 'Yes' : 'No'
+                            process: '0',
+                            status: ''
                         })
                     }
 
