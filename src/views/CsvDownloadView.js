@@ -7,7 +7,7 @@ import DocumentPicker from 'react-native-document-picker';
 import XLSX from 'xlsx'
 import RNFetchBlob from 'rn-fetch-blob'
 import { useDispatch, useSelector } from 'react-redux';
-import { readCsvData } from '../redux/actions/apiActions';
+import { getAddressFromDB, getAddressFromSP, readCsvData } from '../redux/actions/dbAction';
 import { ItemDivider, Loader } from '../constants/CustomWidget';
 
 const screen = Dimensions.get('window')
@@ -17,13 +17,21 @@ const csvFilePath = 'https://clearpathinnovations-my.sharepoint.com/personal/tes
 function CsvDownloadView(props) {
     const dispatch = useDispatch()
     const getCsvData = (csvFile) => dispatch(readCsvData(csvFile))
+    const getAddress = () => dispatch(getAddressFromSP())
     const [csvFileName, onCsvFileName] = useState("");
     const [downloading, setDownloading] = useState(false);
-    const { csvDataList, status } = useSelector((state) => state.csvData)
+    const { csvDataList, status } = useSelector((state) => state.localDB)
+
 
 
     useEffect(() => {
+        let isMounted = true;
+        if (isMounted) {
+            getAddress()
 
+        }
+
+        return () => { isMounted = false };
     }, []);
 
     const readCsvFile = (csvFile) => {
@@ -225,6 +233,8 @@ function CsvDownloadView(props) {
                 // console.log('status==>', status)
                 console.log(res, 'end downloaded')
                 alert('CSV Download Complete')
+                storeData('csv_name', csvFileName)
+                storeData('createdFolder', JSON.stringify(false))
                 readCsvFile(res.data)
                 setDownloading(false)
             })

@@ -4,45 +4,25 @@ import GlobalStyle from '../constants/GlobalStyle';
 import { useDispatch, useSelector } from 'react-redux';
 import { ItemDivider, Loader, VerticalGap } from '../constants/CustomWidget';
 import RNFetchBlob from 'rn-fetch-blob';
-import DocumentPicker from 'react-native-document-picker';
 import { getData, storeData } from '../constants/helperFunction';
-import { pickMultipleFile } from '../redux/actions/apiActions';
-
+import { getImageData, getImageLength, pickMultipleFile, getAllImage } from '../redux/actions/dbAction';
 
 const screen = Dimensions.get('window')
-
-// const list = [
-//     { id: 1, address: 'Adress 1', details: 'Take New Photo', process: '2', status: 'Yes' },
-//     { id: 2, address: 'Adress 2', details: 'Take New Photo', process: '0', status: 'No' },
-//     { id: 3, address: 'Adress 3', details: 'Take New Photo', process: '0', status: 'Yes' },
-//     { id: 4, address: 'Adress 4', details: 'Take New Photo', process: '0', status: 'No' },
-//     { id: 5, address: 'Adress 5', details: 'Take New Photo', process: '1', status: 'Yes' },
-//     { id: 6, address: 'Adress 6', details: 'Take New Photo', process: '0', status: 'No' },
-//     { id: 7, address: 'Adress 7', details: 'Take New Photo', process: '0', status: 'Yes' },
-//     { id: 8, address: 'Adress 8', details: 'Take New Photo', process: '0', status: 'No' }
-// ]
 
 function ParcelListView(props) {
     const dispatch = useDispatch()
     const fetchImageList = (itemData, index) => dispatch(pickMultipleFile(itemData, index))
-    const { csvDataList, status, imageList, selectAddress } = useSelector((state) => state.csvData)
+    const getImages = () => dispatch(getAllImage())
+    // const { csvDataList, status, selectAddress } = useSelector((state) => state.csvData)
+    const { csvDataList, status, selectAddress, imageList } = useSelector((state) => state.localDB)
     const [uploading, setUploading] = useState(false);
     const [allUpdated, setAllUploaded] = useState(false);
     const [fileUploadNumber, setFileUploadNumber] = useState(1);
     const [itemIndex, setItemIndex] = useState(0);
-    // const [imageList, setImageList] = useState([]);
-    var images = [];
 
     useEffect(() => {
-        // fetchAddress()
+        getImages()
     }, []);
-
-    const fetchAddress = async () => {
-        // var addressList = await getData('csv_address')
-        // setList(addressList)
-        console.log('Fetch===>', csvDataList)
-        console.log('List Size==>', csvDataList.length)
-    }
 
     // const pickMultipleFile = async (pickAddress) => {
     //     setAddress(pickAddress)
@@ -97,56 +77,76 @@ function ParcelListView(props) {
         setAllUploaded(false)
         setUploading(true)
         setFileUploadNumber(1)
-        var token = await getData('token')
-        // console.log('createFile token: ' + token);
-        var rootUrl = 'https://graph.microsoft.com/v1.0/me/drive/root/children'
-        var photoappUrl = 'https://graph.microsoft.com/v1.0/me/drive/root:/photoapp:/children'
+        var folderCreated = await getData('createdFolder')
+        var folderID = await getData('newFolderID')
+        if (folderCreated == 'true') {
 
-        var raw = JSON.stringify({
-            "name": "address list 9",
-            "folder": {},
+            alert(folderID)
+            if (folderID != 'No Data' && folderID != '') {
+                upload(folderID)
+            }
 
-        });
-        try {
-            const response = await fetch(photoappUrl, {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'Content-Type': 'application/json'
-                },
-                body: raw,
+        } else {
+            var fileName = await getData('csv_name')
+            var folderName = fileName.split('.')[0]
+            var token = await getData('token')
+            // console.log('createFile token: ' + token);
+            var rootUrl = 'https://graph.microsoft.com/v1.0/me/drive/root/children'
+            var photoappUrl = 'https://graph.microsoft.com/v1.0/me/drive/root:/photoapp:/children'
+
+            var raw = JSON.stringify({
+                "name": folderName,
+                "folder": {},
+                "@microsoft.graph.conflictBehavior": "rename"
+
             });
-            const result = await response.json();
-            console.log('createFile res: ' + response.status);
-            if (response.status == 201) {
-                console.log('createFile: ' + JSON.stringify(result));
-                // alert(createdFolerId)
-                storeData('newFolderID', result.id)
-                upload(result.id)
-            } else {
+            try {
+                const response = await fetch(photoappUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: raw,
+                });
+                const result = await response.json();
+                console.log('createFile res: ' + response.status);
+                if (response.status == 201) {
+                    console.log('createFile: ' + JSON.stringify(result));
+                    // alert(createdFolerId)
+                    storeData('newFolderID', result.id)
+                    storeData('createdFolder', JSON.stringify(true))
+                    upload(result.id)
+                } else if (response.status == 401) {
+                    alert('Token expired')
+                    setAllUploaded(false)
+                    setUploading(false)
+                }
+
+                else {
+                    var folderID = await getData('newFolderID')
+                    if (folderID == 'No Data') {
+                        setAllUploaded(false)
+                        setUploading(false)
+                        alert(JSON.stringify(result))
+                    } else {
+                        upload(folderID)
+                    }
+
+                }
+            } catch (error) {
                 var folderID = await getData('newFolderID')
                 if (folderID == 'No Data') {
                     setAllUploaded(false)
                     setUploading(false)
-                    alert(JSON.stringify(result))
+                    console.log('createFile err: ' + JSON.stringify(error));
+                    alert(error)
                 } else {
                     upload(folderID)
                 }
-
             }
-        } catch (error) {
-            var folderID = await getData('newFolderID')
-            if (folderID == 'No Data') {
-                setAllUploaded(false)
-                setUploading(false)
-                console.log('createFile err: ' + JSON.stringify(error));
-                alert(error)
-            } else {
-                upload(folderID)
-            }
-
-
         }
+
     }
 
     const upload = async (createdFolerId) => {
@@ -164,10 +164,10 @@ function ParcelListView(props) {
         for (const res of imageList) {
             var extc = res.imageName.substring(res.imageName.lastIndexOf('.'))
             if (number > 1)
-                imageName = selectAddress + ' ' + number + extc
-            else imageName = selectAddress + extc
+                imageName = res.address + ' ' + number + extc
+            else imageName = res.address + extc
             console.log('Image name==>', imageName)
-            const path = res.url.replace("file://", "");
+            const path = res.imageUrl;
             var url = 'https://graph.microsoft.com/v1.0/me/drive/items/' + newFolderId + imageName + ':/content'
             let response = await RNFetchBlob.fetch(
                 "PUT",
@@ -177,9 +177,9 @@ function ParcelListView(props) {
                     'Authorization': 'Bearer ' + accessToken,
                     "Content-Type": "multipart/form-data"
                 },
-                RNFetchBlob.wrap(path)
+                RNFetchBlob.wrap(decodeURIComponent(path))
             );
-            console.log('Image==>', res.url)
+            console.log('Image==>', res.imageUrl)
             console.log('response===>', JSON.stringify(response))
             number++;
 
@@ -188,16 +188,31 @@ function ParcelListView(props) {
         }
 
 
-        var item = {
-            ...csvDataList[itemIndex],
-            status: 'Yes'
-        }
-        csvDataList[itemIndex] = item
-        console.log('Change index', itemIndex)
-        console.log('Change data', csvDataList[itemIndex])
+        // var item = {
+        //     ...csvDataList[itemIndex],
+        //     status: 'Yes'
+        // }
+        // csvDataList[itemIndex] = item
+        // console.log('Change index', itemIndex)
+        // console.log('Change data', csvDataList[itemIndex])
+        // storeData('csv_address', csvDataList)
         setUploading(false)
         setAllUploaded(true)
         alert('All image successfully uploaded')
+    }
+
+    const getImageLen = (address) => {
+
+        var imageCount = 0
+        for (var i = 0; i < imageList.length; i++) {
+            if (imageList[i].address == address) {
+                imageCount++
+            }
+        }
+
+        // console.log('db imageCount2===>', imageCount)
+        return imageCount
+
     }
 
     const ChildView = (item, index) => {
@@ -210,11 +225,13 @@ function ParcelListView(props) {
                     <TouchableOpacity
                         style={{ paddingHorizontal: 4, paddingVertical: 4, borderRadius: 4, borderColor: 'grey', borderWidth: 1 }}
                         onPress={() => { fetchImageList(item, index), setItemIndex(index) }} >
-                        <Text style={{ color: 'grey', alignSelf: 'center', textTransform: 'capitalize', fontSize: 10 }}>{item.details}</Text>
+                        <Text style={{ color: 'grey', alignSelf: 'center', textTransform: 'capitalize', fontSize: 10 }}>Take New Photo</Text>
 
                     </TouchableOpacity>
                 </View>
+
                 <View style={{ flex: 1, alignSelf: 'center', }}>
+
                     <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{item.process}</Text>
                 </View>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
@@ -222,6 +239,7 @@ function ParcelListView(props) {
                 </View>
             </View>
         )
+
     }
 
     const ListView = () => {
@@ -276,7 +294,18 @@ function ParcelListView(props) {
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={{ marginLeft: 8, marginTop: 8, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#5d9cec', padding: 8, borderRadius: 4 }}
-                        onPress={() => createFile()} >
+                        onPress={async () => {
+                            // var fileName = await getData('csv_name')
+                            // var folderName = fileName.split('.')[0]
+                            // alert(folderName)
+
+                            // storeData('createdFolder', JSON.stringify(true))
+                            // var folderCreated = await getData('createdFolder')
+                            const extractIndex = csvDataList.findIndex(e => e.address === '152 N Long St');
+                            const csvL = csvDataList[extractIndex]
+                            const newPost = imageList.filter(e => e.address === '158 N Long St');
+                            alert(newPost.length)
+                        }} >
                         <Text style={{ color: 'white', alignSelf: 'center', textTransform: 'uppercase' }}>Upload CSV</Text>
 
                     </TouchableOpacity>

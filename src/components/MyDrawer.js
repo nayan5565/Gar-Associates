@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import 'react-native-gesture-handler';
 import DrawerContent from './DrawerContent';
 import CsvDownloadView from '../views/CsvDownloadView';
 import ParcelListView from '../views/ParcelListView';
+import { createTable } from '../redux/actions/dbAction';
+import { useDispatch } from 'react-redux';
 
 const Drawer = createDrawerNavigator();
 
 function MyDrawer() {
+
     return (
 
         <Drawer.Navigator drawerContent={props => <DrawerContent {...props} />} initialRouteName="CSV" useLegacyImplementation='false'>
