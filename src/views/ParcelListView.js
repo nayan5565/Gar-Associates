@@ -161,41 +161,54 @@ function ParcelListView(props) {
         console.log('folderID==>', newFolderId)
         var number = 1;
         var imageName = '';
-        for (const res of imageList) {
-            var extc = res.imageName.substring(res.imageName.lastIndexOf('.'))
-            if (number > 1)
-                imageName = res.address + ' ' + number + extc
-            else imageName = res.address + extc
-            console.log('Image name==>', imageName)
-            const path = res.imageUrl;
-            var url = 'https://graph.microsoft.com/v1.0/me/drive/items/' + newFolderId + imageName + ':/content'
-            let response = await RNFetchBlob.fetch(
-                "PUT",
-                url,
-                {
-                    Accept: "application/json",
-                    'Authorization': 'Bearer ' + accessToken,
-                    "Content-Type": "multipart/form-data"
-                },
-                RNFetchBlob.wrap(decodeURIComponent(path))
-            );
-            console.log('Image==>', res.imageUrl)
-            console.log('response===>', JSON.stringify(response))
-            number++;
+        var extractIndex = 0;
+        const uniqueAddress = getUnique(imageList, 'address')
+        for (const ads of uniqueAddress) {
+            var numberByAddress = 1;
+            extractIndex = csvDataList.findIndex(e => e.address === ads.address);
+            console.log('uniq==>', ads.address)
+            const imagesByAddress = imageList.filter(e => e.address === ads.address);
+            for (const res of imagesByAddress) {
+                var extc = res.imageName.substring(res.imageName.lastIndexOf('.'))
+                if (numberByAddress > 1)
+                    imageName = res.address + ' ' + numberByAddress + extc
+                else imageName = res.address + extc
+                console.log('Image name==>', imageName)
+                const path = res.imageUrl;
+                var url = 'https://graph.microsoft.com/v1.0/me/drive/items/' + newFolderId + imageName + ':/content'
+                let response = await RNFetchBlob.fetch(
+                    "PUT",
+                    url,
+                    {
+                        Accept: "application/json",
+                        'Authorization': 'Bearer ' + accessToken,
+                        "Content-Type": "multipart/form-data"
+                    },
+                    RNFetchBlob.wrap(decodeURIComponent(path))
+                );
+                console.log('Image==>', res.imageUrl)
+                // console.log('response===>', JSON.stringify(response))
+                numberByAddress++;
+                number++;
 
 
-            setFileUploadNumber(number)
+                setFileUploadNumber(number)
+            }
+            console.log('Change index', extractIndex)
+            console.log('Change data', csvDataList[extractIndex])
+            var item = {
+                ...csvDataList[extractIndex],
+                status: 'Yes'
+            }
+            console.log('Change data2==>', item)
+            csvDataList[extractIndex] = item
+
+            storeData('csv_address', JSON.stringify(csvDataList))
         }
 
 
-        // var item = {
-        //     ...csvDataList[itemIndex],
-        //     status: 'Yes'
-        // }
-        // csvDataList[itemIndex] = item
-        // console.log('Change index', itemIndex)
-        // console.log('Change data', csvDataList[itemIndex])
-        // storeData('csv_address', csvDataList)
+
+
         setUploading(false)
         setAllUploaded(true)
         alert('All image successfully uploaded')
@@ -275,6 +288,20 @@ function ParcelListView(props) {
         )
     }
 
+    function getUnique(arr, index) {
+
+        const unique = arr
+            .map(e => e[index])
+
+            // store the keys of the unique objects
+            .map((e, i, final) => final.indexOf(e) === i && i)
+
+            // eliminate the dead keys & store unique objects
+            .filter(e => arr[e]).map(e => arr[e]);
+
+        return unique;
+    }
+
     return (
         <View style={GlobalStyle.container}>
 
@@ -301,10 +328,30 @@ function ParcelListView(props) {
 
                             // storeData('createdFolder', JSON.stringify(true))
                             // var folderCreated = await getData('createdFolder')
-                            const extractIndex = csvDataList.findIndex(e => e.address === '152 N Long St');
+
                             const csvL = csvDataList[extractIndex]
-                            const newPost = imageList.filter(e => e.address === '158 N Long St');
-                            alert(newPost.length)
+                            const newPost = imageList.filter(e => e.address === '168 N Long St');
+
+                            const uniqueAddress = getUnique(imageList, 'address')
+                            let list = imageList
+                            let unique = []
+                            list.forEach(item => {
+                                if (!unique.includes(item.address)) {
+                                    unique.push(item.address)
+                                }
+                            })
+
+                            // alert(uniqueAddress[0].address)
+                            var extractIndex = 0;
+                            for (const ads of uniqueAddress) {
+                                extractIndex = csvDataList.findIndex(e => e.address === ads.address);
+                                const imagesByAddress = imageList.filter(e => e.address === ads.address && e.status === 'pending');
+                                console.log('uniq==>', ads.address)
+                                console.log('imagesByAddress==>', JSON.stringify(imagesByAddress))
+                                for (const res of imagesByAddress) {
+                                    console.log('status==>', res.status)
+                                }
+                            }
                         }} >
                         <Text style={{ color: 'white', alignSelf: 'center', textTransform: 'uppercase' }}>Upload CSV</Text>
 

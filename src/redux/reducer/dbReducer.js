@@ -1,5 +1,5 @@
 import { storeData } from '../../constants/helperFunction';
-import { GET_IMAGE_DB, SAVE_CSV_DB, SAVE_IMAGE_DB } from '../../constants/types';
+import { GET_IMAGE_DB, SAVE_CSV_DB, SAVE_IMAGE_DB, UPDATE_IMAGE_DB } from '../../constants/types';
 
 const INITIAL_STATE = {
     csvDataList: [],
@@ -23,6 +23,10 @@ const dbReducer = (state = INITIAL_STATE, action) => {
         case GET_IMAGE_DB:
 
             return { ...state, imageList: action.payload, imageStatus: action.imageStatus }
+        case UPDATE_IMAGE_DB:
+            let newImages = [...state.imageList]
+            newImages[action.index] = action.item
+            return { ...state, imageList: newImages, imageStatus: action.imageStatus }
 
         default:
             return state

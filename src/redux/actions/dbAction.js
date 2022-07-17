@@ -2,7 +2,7 @@ import { readFile } from "react-native-fs";
 import { getData, storeData } from "../../constants/helperFunction";
 import XLSX from 'xlsx'
 import { openDatabase } from 'react-native-sqlite-storage';
-import { GET_IMAGE_DB, SAVE_CSV_DB, SAVE_IMAGE_DB } from '../../constants/types';
+import { GET_IMAGE_DB, SAVE_CSV_DB, SAVE_IMAGE_DB, UPDATE_IMAGE_DB } from '../../constants/types';
 import DocumentPicker from 'react-native-document-picker';
 
 const tableName = 'address_list';
@@ -19,7 +19,7 @@ export const createTable = () => {
     db.transaction((tx) => {
         tx.executeSql("CREATE TABLE IF NOT EXISTS "
             + "ImageList "
-            + "(id INTEGER PRIMARY KEY AUTOINCREMENT, imageUrl TEXT, imageName TEXT, imageType TEXT, address TEXT);"
+            + "(id INTEGER PRIMARY KEY AUTOINCREMENT, imageUrl TEXT, imageName TEXT, imageType TEXT, address TEXT, status TEXT);"
         )
     })
 }
@@ -292,8 +292,8 @@ export const pickMultipleFile = (itemData, index) => {
                 pickImage.push(track)
                 await db.transaction(async (tx) => {
 
-                    await tx.executeSql("INSERT INTO ImageList (imageUrl, imageName, imageType, address ) VALUES (?,?,?,?)",
-                        [res.fileCopyUri, res.name, res.type, itemData.address],
+                    await tx.executeSql("INSERT INTO ImageList (imageUrl, imageName, imageType, address, status ) VALUES (?,?,?,?,?)",
+                        [res.fileCopyUri, res.name, res.type, itemData.address, 'pending'],
                         (tx, results) => {
 
                             console.log('Save DB')
@@ -322,7 +322,7 @@ export const pickMultipleFile = (itemData, index) => {
 
                             for (var i = 0; i < len; i++) {
                                 var item = results.rows.item(i);
-                                images.push({ id: item.id, imageUrl: item.imageUrl, imageName: item.imageName, imageType: item.imageType, address: item.address })
+                                images.push({ id: item.id, imageUrl: item.imageUrl, imageName: item.imageName, imageType: item.imageType, address: item.address, status: item.status })
                             }
 
                         }
@@ -398,6 +398,37 @@ export const saveImage = (imageUri, imageName, imageType, address) => {
 
 }
 
+const updateImage = (item, index) => {
+    return async dispatch => {
+        await db.transaction(async (tx) => {
+            'ImageList (imageUrl, imageName, imageType, address, status ) VALUES (?,?,?,?,?)'
+            await tx.executeSql("UPDATE ImageList SET imageUrl = ? , imageName = ? , imageType = ? , address = ? , status = ? WHERE id = ?",
+                [item.imageUrl, item.imageName, item.imageType, item.address, item.status, item.id],
+                (tx, results) => {
+                    alert('Successfully Update');
+                    var item2 = {
+                        ...item,
+                        status: 'uploaded'
+                    }
+                    dispatch({
+                        type: UPDATE_IMAGE_DB,
+                        item: item2,
+                        index: index,
+                        imageStatus: 'success'
+                    });
+                },
+                error => {
+                    dispatch({
+                        type: UPDATE_IMAGE_DB,
+                        imageStatus: 'error'
+                    }), console.log('Update error: ' + error.message)
+                }
+            );
+
+        })
+    }
+}
+
 export const getAllImage = () => {
     return async dispatch => {
         db.transaction((tx) => {
@@ -412,7 +443,7 @@ export const getAllImage = () => {
 
                         for (var i = 0; i < len; i++) {
                             var item = results.rows.item(i);
-                            images.push({ id: item.id, imageUrl: item.imageUrl, imageName: item.imageName, imageType: item.imageType, address: item.address })
+                            images.push({ id: item.id, imageUrl: item.imageUrl, imageName: item.imageName, imageType: item.imageType, address: item.address, status: item.status })
                         }
 
                     }
