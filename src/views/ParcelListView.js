@@ -19,7 +19,10 @@ function ParcelListView(props) {
     const { csvDataList, status, selectAddress, imageList } = useSelector((state) => state.localDB)
     const [uploading, setUploading] = useState(false);
     const [allUpdated, setAllUploaded] = useState(false);
+    const [isTakeImageView, setIsTakeImageView] = useState(false);
     const [fileUploadNumber, setFileUploadNumber] = useState(1);
+    const [selectedItem, setSelectedItem] = useState();
+    const [selectedIndex, setSelectedIndex] = useState(0);
     // const [totalPendingImage, setTotalPendingImage] = useState(0);
 
     useEffect(() => {
@@ -243,6 +246,29 @@ function ParcelListView(props) {
 
     }
 
+    const TakeImageView = (item, index) => {
+        return (
+            <View style={{ paddingHorizontal: 12 }}>
+                <View style={{ flexDirection: 'row', width: screen.width, justifyContent: 'space-between' }} >
+                    <TouchableOpacity
+                        style={{ paddingHorizontal: 8, paddingVertical: 8, borderRadius: 4, borderColor: 'grey', borderWidth: 1 }}
+                        // onPress={() => { fetchImageList(item, index) }} >
+                        onPress={() => { setIsTakeImageView(false) }} >
+                        <Text style={{ color: 'grey', alignSelf: 'center', textTransform: 'capitalize', fontSize: 12 }}>Return To Parcel List</Text>
+
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={{ paddingHorizontal: 12, paddingVertical: 8, marginRight: 24, borderRadius: 4, borderColor: 'green', backgroundColor: 'green', borderWidth: 1 }}
+                        onPress={() => { fetchImageList(item, index) }} >
+                        <Text style={{ color: 'white', alignSelf: 'center', textTransform: 'capitalize', fontSize: 12 }}>Take Photo</Text>
+
+                    </TouchableOpacity>
+                </View>
+                <Text>{item.address}:{index}</Text>
+            </View>
+        )
+    }
+
     const ChildView = (item, index) => {
         return (
             <View style={{ flexDirection: 'row', width: screen.width, marginVertical: 4, paddingHorizontal: 6, }}>
@@ -252,7 +278,8 @@ function ParcelListView(props) {
                 <View style={{ flex: 1, alignSelf: 'center', }}>
                     <TouchableOpacity
                         style={{ paddingHorizontal: 4, paddingVertical: 4, borderRadius: 4, borderColor: 'grey', borderWidth: 1 }}
-                        onPress={() => { fetchImageList(item, index) }} >
+                        // onPress={() => { fetchImageList(item, index) }} >
+                        onPress={() => { setIsTakeImageView(true), setSelectedItem(item), setSelectedIndex(index) }} >
                         <Text style={{ color: 'grey', alignSelf: 'center', textTransform: 'capitalize', fontSize: 10 }}>Take New Photo</Text>
 
                     </TouchableOpacity>
@@ -318,10 +345,8 @@ function ParcelListView(props) {
         return unique;
     }
 
-    return (
-        <View style={GlobalStyle.container}>
-
-
+    const UploadTopView = () => {
+        return (
             <View style={{ flexDirection: 'row', marginTop: 0, paddingHorizontal: 8 }}>
                 <View>
                     <Text style={{ paddingHorizontal: 8, fontSize: 16 }}>Current</Text>
@@ -376,12 +401,26 @@ function ParcelListView(props) {
                     </TouchableOpacity>
                 </View>
             </View>
-            {VerticalGap(12)}
-            {ItemDivider()}
-            {VerticalGap(8)}
-            {BuildTable()}
-            {ItemDivider()}
-            {ListView()}
+        )
+    }
+
+    const ParcelView = () => {
+        return (
+            <View >
+                {UploadTopView()}
+                {VerticalGap(12)}
+                {ItemDivider()}
+                {VerticalGap(8)}
+                {BuildTable()}
+                {ItemDivider()}
+                {ListView()}
+            </View>
+        )
+    }
+
+    return (
+        <View style={GlobalStyle.container}>
+            {isTakeImageView ? TakeImageView(selectedItem, selectedIndex) : ParcelView()}
         </View>
     );
 }
