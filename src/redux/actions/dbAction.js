@@ -5,7 +5,8 @@ import { openDatabase } from 'react-native-sqlite-storage';
 import { GET_IMAGE_DB, SAVE_CSV_DB, SAVE_IMAGE_DB, UPDATE_IMAGE_DB } from '../../constants/types';
 import DocumentPicker from 'react-native-document-picker';
 
-const tableName = 'address_list';
+const tblAddress = 'address_list';
+const tblImage = 'ImageList';
 
 export const db = openDatabase({
     name: 'GA_DB',
@@ -18,8 +19,8 @@ export const db = openDatabase({
 export const createTable = () => {
     db.transaction((tx) => {
         tx.executeSql("CREATE TABLE IF NOT EXISTS "
-            + "ImageList "
-            + "(id INTEGER PRIMARY KEY AUTOINCREMENT, imageUrl TEXT, imageName TEXT, imageType TEXT, address TEXT, status TEXT);"
+            + tblImage
+            + "(id INTEGER PRIMARY KEY AUTOINCREMENT, imageUrl TEXT, imageName TEXT, imageType TEXT, address TEXT, imageNumber INTEGER, status TEXT);"
         )
     })
 }
@@ -107,7 +108,7 @@ const saveCsvAddress = async (id, address, propertyClass, buildStyle, process, s
 
 export const saveTodoItems = (todoItems) => {
     const insertQuery =
-        `INSERT OR REPLACE INTO ${tableName}(id, address, propertyClass,buildStyle, process, status) values` +
+        `INSERT OR REPLACE INTO ${tblAddress}(id, address, propertyClass,buildStyle, process, status) values` +
         todoItems.map(i => `(${i.id}, '${i.address}, '${i.propertyClass}, '${i.buildStyle}, '${i.process}, '${i.status}')`).join(',');
 
     return db.executeSql(insertQuery);
@@ -211,7 +212,7 @@ export const getImageData = (address) => {
 
                         for (var i = 0; i < len; i++) {
                             var item = results.rows.item(i);
-                            images.push({ id: item.id, imageUrl: item.imageUrl, imageName: item.imageName, imageType: item.imageType, address: item.address })
+                            images.push({ id: item.id, imageUrl: item.imageUrl, imageName: item.imageName, imageType: item.imageType, address: item.address, imageNumber: item.imageNumber, status: item.status })
                         }
 
                     }
@@ -292,8 +293,8 @@ export const pickMultipleFile = (itemData, index) => {
                 pickImage.push(track)
                 await db.transaction(async (tx) => {
 
-                    await tx.executeSql("INSERT INTO ImageList (imageUrl, imageName, imageType, address, status ) VALUES (?,?,?,?,?)",
-                        [res.fileCopyUri, res.name, res.type, itemData.address, 'pending'],
+                    await tx.executeSql("INSERT INTO ImageList (imageUrl, imageName, imageType, address, imageNumber, status ) VALUES (?,?,?,?,?,?)",
+                        [res.fileCopyUri, res.name, res.type, itemData.address, 0, 'pending'],
                         (tx, results) => {
 
                             console.log('Save DB')
@@ -309,10 +310,40 @@ export const pickMultipleFile = (itemData, index) => {
                 })
 
             }
-
+            //fetch images of address
+            var imagesAddress = [];
             db.transaction((tx) => {
                 console.log('db address2===>', itemData.address)
                 tx.executeSql('SELECT * FROM ImageList WHERE address = ?', [itemData.address],
+
+                    (tx, results) => {
+                        var len = results.rows.length;
+                        // console.log("len: " + JSON.stringify(results.rows.item(0)))
+
+                        if (len > 0) {
+
+                            for (var i = 0; i < len; i++) {
+                                var item = results.rows.item(i);
+                                imagesAddress.push({ id: item.id, imageUrl: item.imageUrl, imageName: item.imageName, imageType: item.imageType, address: item.address, imageNumber: item.imageNumber, status: item.status })
+                            }
+
+                        }
+
+                    },
+                    error => {
+                        dispatch({
+                            type: SAVE_IMAGE_DB,
+                            status: 'error'
+                        });
+                        console.log('getting error: ' + error.message)
+                    }
+                );
+
+            })
+            //fetch all images
+            db.transaction((tx) => {
+
+                tx.executeSql('SELECT * FROM ImageList', [],
 
                     (tx, results) => {
                         var len = results.rows.length;
@@ -322,14 +353,16 @@ export const pickMultipleFile = (itemData, index) => {
 
                             for (var i = 0; i < len; i++) {
                                 var item = results.rows.item(i);
-                                images.push({ id: item.id, imageUrl: item.imageUrl, imageName: item.imageName, imageType: item.imageType, address: item.address, status: item.status })
+                                images.push({ id: item.id, imageUrl: item.imageUrl, imageName: item.imageName, imageType: item.imageType, address: item.address, imageNumber: item.imageNumber, status: item.status })
                             }
 
                         }
-                        console.log('db Image===>', images.length)
+                        console.log('db all Image===>', images.length)
+
+                        console.log('db Image===>', imagesAddress.length)
                         var item2 = {
                             ...itemData,
-                            process: images.length,
+                            process: imagesAddress.length,
                             status: 'No'
                         }
                         dispatch({
@@ -351,7 +384,6 @@ export const pickMultipleFile = (itemData, index) => {
                 );
 
             })
-
 
         }
     } catch (err) {
@@ -375,8 +407,8 @@ export const saveImage = (imageUri, imageName, imageType, address) => {
         createTable()
         await db.transaction(async (tx) => {
 
-            await tx.executeSql("INSERT INTO ImageList (imageUri, imageName, imageType, address ) VALUES (?,?,?,?)",
-                [imageUri, imageName, imageType, address],
+            await tx.executeSql("INSERT INTO ImageList (imageUri, imageName, imageType, address, imageNumber, status ) VALUES (?,?,?,?,?,?)",
+                [imageUri, imageName, imageType, address, 0, 'pending'],
                 (tx, results) => {
                     var images = [];
                     dispatch({
@@ -398,16 +430,17 @@ export const saveImage = (imageUri, imageName, imageType, address) => {
 
 }
 
-const updateImage = (item, index) => {
+export const updateImage = (item, index, number) => {
     return async dispatch => {
         await db.transaction(async (tx) => {
-            'ImageList (imageUrl, imageName, imageType, address, status ) VALUES (?,?,?,?,?)'
-            await tx.executeSql("UPDATE ImageList SET imageUrl = ? , imageName = ? , imageType = ? , address = ? , status = ? WHERE id = ?",
-                [item.imageUrl, item.imageName, item.imageType, item.address, item.status, item.id],
+            'ImageList (imageUrl, imageName, imageType, address, imageNumber, status ) VALUES (?,?,?,?,?,?)'
+            await tx.executeSql("UPDATE ImageList SET imageUrl = ? , imageName = ? , imageType = ? , address = ? , imageNumber = ? , status = ? WHERE id = ?",
+                [item.imageUrl, item.imageName, item.imageType, item.address, number, 'uploaded', item.id],
                 (tx, results) => {
-                    alert('Successfully Update');
+                    console.log('Successfully Update==>', item.imageName);
                     var item2 = {
                         ...item,
+                        imageNumber: number,
                         status: 'uploaded'
                     }
                     dispatch({
@@ -443,7 +476,7 @@ export const getAllImage = () => {
 
                         for (var i = 0; i < len; i++) {
                             var item = results.rows.item(i);
-                            images.push({ id: item.id, imageUrl: item.imageUrl, imageName: item.imageName, imageType: item.imageType, address: item.address, status: item.status })
+                            images.push({ id: item.id, imageUrl: item.imageUrl, imageName: item.imageName, imageType: item.imageType, address: item.address, imageNumber: item.imageNumber, status: item.status })
                         }
 
                     }

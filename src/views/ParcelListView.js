@@ -5,20 +5,22 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ItemDivider, Loader, VerticalGap } from '../constants/CustomWidget';
 import RNFetchBlob from 'rn-fetch-blob';
 import { getData, storeData } from '../constants/helperFunction';
-import { getImageData, getImageLength, pickMultipleFile, getAllImage } from '../redux/actions/dbAction';
+import { getImageData, getImageLength, pickMultipleFile, getAllImage, updateImage } from '../redux/actions/dbAction';
 
 const screen = Dimensions.get('window')
+var totalPendingImage = 0;
 
 function ParcelListView(props) {
     const dispatch = useDispatch()
     const fetchImageList = (itemData, index) => dispatch(pickMultipleFile(itemData, index))
     const getImages = () => dispatch(getAllImage())
+    const updateUploadedImage = (item, index, number) => dispatch(updateImage(item, index, number))
     // const { csvDataList, status, selectAddress } = useSelector((state) => state.csvData)
     const { csvDataList, status, selectAddress, imageList } = useSelector((state) => state.localDB)
     const [uploading, setUploading] = useState(false);
     const [allUpdated, setAllUploaded] = useState(false);
     const [fileUploadNumber, setFileUploadNumber] = useState(1);
-    const [itemIndex, setItemIndex] = useState(0);
+    // const [totalPendingImage, setTotalPendingImage] = useState(0);
 
     useEffect(() => {
         getImages()
@@ -74,75 +76,82 @@ function ParcelListView(props) {
     // }
 
     const createFile = async () => {
-        setAllUploaded(false)
-        setUploading(true)
-        setFileUploadNumber(1)
-        var folderCreated = await getData('createdFolder')
-        var folderID = await getData('newFolderID')
-        if (folderCreated == 'true') {
+        const pendingImages = imageList.filter(e => e.status === 'pending');
+        // setTotalPendingImage(pendingImages.length)
+        // console.log('totalPending==>', pendingImages.length)
+        totalPendingImage = pendingImages.length
+        console.log('totalPendingHook==>', totalPendingImage)
+        if (totalPendingImage > 0) {
+            setAllUploaded(false)
+            setUploading(true)
+            setFileUploadNumber(1)
+            var folderCreated = await getData('createdFolder')
+            var folderID = await getData('newFolderID')
+            if (folderCreated == 'true') {
 
-            alert(folderID)
-            if (folderID != 'No Data' && folderID != '') {
-                upload(folderID)
-            }
-
-        } else {
-            var fileName = await getData('csv_name')
-            var folderName = fileName.split('.')[0]
-            var token = await getData('token')
-            // console.log('createFile token: ' + token);
-            var rootUrl = 'https://graph.microsoft.com/v1.0/me/drive/root/children'
-            var photoappUrl = 'https://graph.microsoft.com/v1.0/me/drive/root:/photoapp:/children'
-
-            var raw = JSON.stringify({
-                "name": folderName,
-                "folder": {},
-                "@microsoft.graph.conflictBehavior": "rename"
-
-            });
-            try {
-                const response = await fetch(photoappUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Content-Type': 'application/json'
-                    },
-                    body: raw,
-                });
-                const result = await response.json();
-                console.log('createFile res: ' + response.status);
-                if (response.status == 201) {
-                    console.log('createFile: ' + JSON.stringify(result));
-                    // alert(createdFolerId)
-                    storeData('newFolderID', result.id)
-                    storeData('createdFolder', JSON.stringify(true))
-                    upload(result.id)
-                } else if (response.status == 401) {
-                    alert('Token expired')
-                    setAllUploaded(false)
-                    setUploading(false)
+                // alert(folderID)
+                if (folderID != 'No Data' && folderID != '') {
+                    upload(folderID)
                 }
 
-                else {
+            } else {
+                var fileName = await getData('csv_name')
+                var folderName = fileName.split('.')[0]
+                var token = await getData('token')
+                // console.log('createFile token: ' + token);
+                var rootUrl = 'https://graph.microsoft.com/v1.0/me/drive/root/children'
+                var photoappUrl = 'https://graph.microsoft.com/v1.0/me/drive/root:/photoapp:/children'
+
+                var raw = JSON.stringify({
+                    "name": folderName,
+                    "folder": {},
+                    "@microsoft.graph.conflictBehavior": "rename"
+
+                });
+                try {
+                    const response = await fetch(photoappUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: raw,
+                    });
+                    const result = await response.json();
+                    console.log('createFile res: ' + response.status);
+                    if (response.status == 201) {
+                        console.log('createFile: ' + JSON.stringify(result));
+                        // alert(createdFolerId)
+                        storeData('newFolderID', result.id)
+                        storeData('createdFolder', JSON.stringify(true))
+                        upload(result.id)
+                    } else if (response.status == 401) {
+                        alert('Token expired')
+                        setAllUploaded(false)
+                        setUploading(false)
+                    }
+
+                    else {
+                        var folderID = await getData('newFolderID')
+                        if (folderID == 'No Data') {
+                            setAllUploaded(false)
+                            setUploading(false)
+                            alert(JSON.stringify(result))
+                        } else {
+                            upload(folderID)
+                        }
+
+                    }
+                } catch (error) {
                     var folderID = await getData('newFolderID')
                     if (folderID == 'No Data') {
                         setAllUploaded(false)
                         setUploading(false)
-                        alert(JSON.stringify(result))
+                        console.log('createFile err: ' + JSON.stringify(error));
+                        alert(error)
                     } else {
                         upload(folderID)
                     }
-
-                }
-            } catch (error) {
-                var folderID = await getData('newFolderID')
-                if (folderID == 'No Data') {
-                    setAllUploaded(false)
-                    setUploading(false)
-                    console.log('createFile err: ' + JSON.stringify(error));
-                    alert(error)
-                } else {
-                    upload(folderID)
                 }
             }
         }
@@ -150,7 +159,6 @@ function ParcelListView(props) {
     }
 
     const upload = async (createdFolerId) => {
-
         var accessToken = await getData('token')
         console.log('Image l==>', imageList.length)
         // console.log('upload token==>', accessToken)
@@ -162,53 +170,60 @@ function ParcelListView(props) {
         var number = 1;
         var imageName = '';
         var extractIndex = 0;
+        var extractImageIndex = 0;
         const uniqueAddress = getUnique(imageList, 'address')
+
         for (const ads of uniqueAddress) {
             var numberByAddress = 1;
             extractIndex = csvDataList.findIndex(e => e.address === ads.address);
-            console.log('uniq==>', ads.address)
-            const imagesByAddress = imageList.filter(e => e.address === ads.address);
-            for (const res of imagesByAddress) {
-                var extc = res.imageName.substring(res.imageName.lastIndexOf('.'))
-                if (numberByAddress > 1)
-                    imageName = res.address + ' ' + numberByAddress + extc
-                else imageName = res.address + extc
-                console.log('Image name==>', imageName)
-                const path = res.imageUrl;
-                var url = 'https://graph.microsoft.com/v1.0/me/drive/items/' + newFolderId + imageName + ':/content'
-                let response = await RNFetchBlob.fetch(
-                    "PUT",
-                    url,
-                    {
-                        Accept: "application/json",
-                        'Authorization': 'Bearer ' + accessToken,
-                        "Content-Type": "multipart/form-data"
-                    },
-                    RNFetchBlob.wrap(decodeURIComponent(path))
-                );
-                console.log('Image==>', res.imageUrl)
-                // console.log('response===>', JSON.stringify(response))
-                numberByAddress++;
-                number++;
 
+            const imagesByAddress = imageList.filter(e => e.address === ads.address && e.status === 'pending');
+            console.log('imagesByAddress==>', imagesByAddress.length)
+            if (imagesByAddress.length > 0) {
+                const uploadedImages = imageList.filter(e => e.address === ads.address && e.status === 'uploaded');
+                if (uploadedImages.length > 0) {
+                    numberByAddress = uploadedImages[uploadedImages.length - 1].imageNumber
+                    numberByAddress = numberByAddress + 1
+                }
+                for (const res of imagesByAddress) {
+                    var extc = res.imageName.substring(res.imageName.lastIndexOf('.'))
+                    if (numberByAddress > 1)
+                        imageName = res.address + ' ' + numberByAddress + extc
+                    else imageName = res.address + extc
+                    console.log('Image name==>', imageName)
+                    const path = res.imageUrl;
+                    var url = 'https://graph.microsoft.com/v1.0/me/drive/items/' + newFolderId + imageName + ':/content'
+                    let response = await RNFetchBlob.fetch(
+                        "PUT",
+                        url,
+                        {
+                            Accept: "application/json",
+                            'Authorization': 'Bearer ' + accessToken,
+                            "Content-Type": "multipart/form-data"
+                        },
+                        RNFetchBlob.wrap(decodeURIComponent(path))
+                    );
+                    console.log('Image==>', res.imageUrl)
+                    // console.log('response===>', JSON.stringify(response))
+                    extractImageIndex = imageList.findIndex(e => e.id === res.id);
+                    updateUploadedImage(res, extractImageIndex, numberByAddress)
+                    numberByAddress++;
+                    number++;
+                    setFileUploadNumber(number)
+                }
+                console.log('Change index', extractIndex)
+                console.log('Change data', csvDataList[extractIndex])
+                var item = {
+                    ...csvDataList[extractIndex],
+                    status: 'Yes'
+                }
+                console.log('Change data2==>', item)
+                csvDataList[extractIndex] = item
 
-                setFileUploadNumber(number)
-            }
-            console.log('Change index', extractIndex)
-            console.log('Change data', csvDataList[extractIndex])
-            var item = {
-                ...csvDataList[extractIndex],
-                status: 'Yes'
-            }
-            console.log('Change data2==>', item)
-            csvDataList[extractIndex] = item
+                storeData('csv_address', JSON.stringify(csvDataList))
+            } else console.log('no pending image')
 
-            storeData('csv_address', JSON.stringify(csvDataList))
         }
-
-
-
-
         setUploading(false)
         setAllUploaded(true)
         alert('All image successfully uploaded')
@@ -237,7 +252,7 @@ function ParcelListView(props) {
                 <View style={{ flex: 1, alignSelf: 'center', }}>
                     <TouchableOpacity
                         style={{ paddingHorizontal: 4, paddingVertical: 4, borderRadius: 4, borderColor: 'grey', borderWidth: 1 }}
-                        onPress={() => { fetchImageList(item, index), setItemIndex(index) }} >
+                        onPress={() => { fetchImageList(item, index) }} >
                         <Text style={{ color: 'grey', alignSelf: 'center', textTransform: 'capitalize', fontSize: 10 }}>Take New Photo</Text>
 
                     </TouchableOpacity>
@@ -281,9 +296,10 @@ function ParcelListView(props) {
         )
     }
     const UploadingText = () => {
+
         return (
 
-            <Text style={{ color: 'white' }}>Image uploading {fileUploadNumber}/{imageList.length} </Text>
+            <Text style={{ color: 'white' }}>Image uploading {fileUploadNumber}/{totalPendingImage} </Text>
 
         )
     }
@@ -345,11 +361,13 @@ function ParcelListView(props) {
                             var extractIndex = 0;
                             for (const ads of uniqueAddress) {
                                 extractIndex = csvDataList.findIndex(e => e.address === ads.address);
-                                const imagesByAddress = imageList.filter(e => e.address === ads.address && e.status === 'pending');
-                                console.log('uniq==>', ads.address)
-                                console.log('imagesByAddress==>', JSON.stringify(imagesByAddress))
+                                const imagesByAddress = imageList.filter(e => e.address === ads.address && e.status === 'uploaded');
+                                var number = imagesByAddress[imagesByAddress.length - 1].imageNumber
+                                console.log('uniq address==>', ads.address)
+                                console.log('uniq len==>', uniqueAddress.length)
+                                // console.log('imagesByAddress==>', JSON.stringify(imagesByAddress))
                                 for (const res of imagesByAddress) {
-                                    console.log('status==>', res.status)
+                                    console.log('status==>', res.imageNumber)
                                 }
                             }
                         }} >
