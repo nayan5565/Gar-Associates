@@ -220,7 +220,7 @@ function ParcelListView({ navigation }) {
                         // alert('Token expired!!Please login again!!')
                         setAllUploaded(false)
                         setUploading(false)
-                        if (response.respInfo.status === 201) {
+                        if (response.respInfo.status === 401) {
                             navigation.popToTop()
                         }
 
