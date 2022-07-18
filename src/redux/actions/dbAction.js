@@ -53,10 +53,13 @@ export const readCsvData = (csvFile) => {
                             address: data[i][1],
                             propertyClass: data[i][3],
                             buildStyle: data[i][4],
+                            SFLA: data[i][5],
+                            LAT: data[i][6],
+                            LONG: data[i][7],
                             process: '0',
                             status: ''
                         })
-                        saveCsvAddress(data[i][0], data[i][1], data[i][3], data[i][4], '0', '')
+                        // saveCsvAddress(data[i][0], data[i][1], data[i][3], data[i][4], '0', '')
 
                     }
 
@@ -494,6 +497,33 @@ export const getAllImage = () => {
                         status: 'error'
                     });
                     console.log('getting error: ' + error.message)
+                }
+            );
+
+        })
+    }
+}
+
+export const deleteAllImage = () => {
+    return async dispatch => {
+        await db.transaction(async (tx) => {
+
+            await tx.executeSql("DELETE FROM ImageList",
+                [],
+                (tx, results) => {
+                    console.log('Successfully Deleted');
+                    var images = [];
+                    dispatch({
+                        type: GET_IMAGE_DB,
+                        payload: images,
+                        imageStatus: 'success'
+                    });
+                },
+                error => {
+                    dispatch({
+                        type: GET_IMAGE_DB,
+                        status: 'error'
+                    }); console.log('Deleted error: ' + error.message)
                 }
             );
 

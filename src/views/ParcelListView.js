@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, TouchableOpacity, Text, TextInput, View, Dimensions, FlatList } from 'react-native';
+import { SafeAreaView, TouchableOpacity, Text, TextInput, View, Dimensions, FlatList, Image } from 'react-native';
 import GlobalStyle from '../constants/GlobalStyle';
 import { useDispatch, useSelector } from 'react-redux';
-import { ItemDivider, Loader, VerticalGap } from '../constants/CustomWidget';
+import { ImageView, ItemDivider, Loader, VerticalGap } from '../constants/CustomWidget';
 import RNFetchBlob from 'rn-fetch-blob';
 import { getData, storeData } from '../constants/helperFunction';
 import { getImageData, getImageLength, pickMultipleFile, getAllImage, updateImage } from '../redux/actions/dbAction';
@@ -246,29 +246,6 @@ function ParcelListView(props) {
 
     }
 
-    const TakeImageView = (item, index) => {
-        return (
-            <View style={{ paddingHorizontal: 12 }}>
-                <View style={{ flexDirection: 'row', width: screen.width, justifyContent: 'space-between' }} >
-                    <TouchableOpacity
-                        style={{ paddingHorizontal: 8, paddingVertical: 8, borderRadius: 4, borderColor: 'grey', borderWidth: 1 }}
-                        // onPress={() => { fetchImageList(item, index) }} >
-                        onPress={() => { setIsTakeImageView(false) }} >
-                        <Text style={{ color: 'grey', alignSelf: 'center', textTransform: 'capitalize', fontSize: 12 }}>Return To Parcel List</Text>
-
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={{ paddingHorizontal: 12, paddingVertical: 8, marginRight: 24, borderRadius: 4, borderColor: 'green', backgroundColor: 'green', borderWidth: 1 }}
-                        onPress={() => { fetchImageList(item, index) }} >
-                        <Text style={{ color: 'white', alignSelf: 'center', textTransform: 'capitalize', fontSize: 12 }}>Take Photo</Text>
-
-                    </TouchableOpacity>
-                </View>
-                <Text>{item.address}:{index}</Text>
-            </View>
-        )
-    }
-
     const ChildView = (item, index) => {
         return (
             <View style={{ flexDirection: 'row', width: screen.width, marginVertical: 4, paddingHorizontal: 6, }}>
@@ -400,6 +377,44 @@ function ParcelListView(props) {
 
                     </TouchableOpacity>
                 </View>
+            </View>
+        )
+    }
+
+    const TakeImageView = (item, index) => {
+        const imagesByAddress = imageList.filter(e => e.address === item.address);
+        return (
+            <View style={{ paddingHorizontal: 12 }}>
+                <View style={{ flexDirection: 'row', width: screen.width, justifyContent: 'space-between' }} >
+                    <TouchableOpacity
+                        style={{ paddingHorizontal: 8, paddingVertical: 8, borderRadius: 4, borderColor: 'grey', borderWidth: 1 }}
+                        // onPress={() => { fetchImageList(item, index) }} >
+                        onPress={() => { setIsTakeImageView(false) }} >
+                        <Text style={{ color: 'grey', alignSelf: 'center', textTransform: 'capitalize', fontSize: 12 }}>Return To Parcel List</Text>
+
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={{ paddingHorizontal: 12, paddingVertical: 8, marginRight: 24, borderRadius: 4, borderColor: 'green', backgroundColor: 'green', borderWidth: 1 }}
+                        onPress={() => { fetchImageList(item, index) }} >
+                        <Text style={{ color: 'white', alignSelf: 'center', textTransform: 'capitalize', fontSize: 12 }}>Take Photo</Text>
+
+                    </TouchableOpacity>
+                </View>
+                {VerticalGap(8)}
+                {/* <Text>ID: {item.id}</Text> */}
+                <View style={{ alignItems: 'center' }}>
+                    <Text>Address: {item.address}</Text>
+                    <Text>Property Class: {item.propertyClass}</Text>
+                    <Text>Building Class: {item.buildStyle}</Text>
+                    <Text>SFLA: {item.SFLA}</Text>
+                    <Text>Lat, Long: {item.LAT}, {item.LONG}</Text>
+                    {VerticalGap(8)}
+                    <Text>Number Of Images: {imagesByAddress.length}</Text>
+                    <Text>Last Image Taken:</Text>
+
+                    {imagesByAddress.length > 0 ? ImageView(imagesByAddress[imagesByAddress.length - 1].imageUrl) : null}
+                </View>
+
             </View>
         )
     }

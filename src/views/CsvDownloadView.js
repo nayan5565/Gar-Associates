@@ -7,7 +7,7 @@ import DocumentPicker from 'react-native-document-picker';
 import XLSX from 'xlsx'
 import RNFetchBlob from 'rn-fetch-blob'
 import { useDispatch, useSelector } from 'react-redux';
-import { getAddressFromDB, getAddressFromSP, readCsvData } from '../redux/actions/dbAction';
+import { deleteAllImage, getAddressFromDB, getAddressFromSP, readCsvData } from '../redux/actions/dbAction';
 import { ItemDivider, Loader } from '../constants/CustomWidget';
 
 const screen = Dimensions.get('window')
@@ -18,6 +18,7 @@ function CsvDownloadView(props) {
     const dispatch = useDispatch()
     const getCsvData = (csvFile) => dispatch(readCsvData(csvFile))
     const getAddress = () => dispatch(getAddressFromSP())
+    const deleteImages = () => dispatch(deleteAllImage())
     const [csvFileName, onCsvFileName] = useState("");
     const [downloading, setDownloading] = useState(false);
     const { csvDataList, status } = useSelector((state) => state.localDB)
@@ -186,6 +187,7 @@ function CsvDownloadView(props) {
                 )
                 if (granted === PermissionsAndroid.RESULTS.GRANTED) {
                     console.log('storage granted')
+                    deleteImages()
                     fetchDownloadUrl()
                 } else { alert('Storage permission not granted') }
             } catch (error) {
