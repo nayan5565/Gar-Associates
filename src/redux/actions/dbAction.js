@@ -433,18 +433,18 @@ export const saveImage = (imageUri, imageName, imageType, address) => {
 
 }
 
-export const updateImage = (item, index, number) => {
+export const updateImage = (item, index, number, uploadStatus) => {
     return async dispatch => {
         await db.transaction(async (tx) => {
             'ImageList (imageUrl, imageName, imageType, address, imageNumber, status ) VALUES (?,?,?,?,?,?)'
             await tx.executeSql("UPDATE ImageList SET imageUrl = ? , imageName = ? , imageType = ? , address = ? , imageNumber = ? , status = ? WHERE id = ?",
-                [item.imageUrl, item.imageName, item.imageType, item.address, number, 'uploaded', item.id],
+                [item.imageUrl, item.imageName, item.imageType, item.address, number, uploadStatus, item.id],
                 (tx, results) => {
-                    console.log('Successfully Update==>', item.imageName);
+                    console.log('Successfully Update==>', uploadStatus);
                     var item2 = {
                         ...item,
                         imageNumber: number,
-                        status: 'uploaded'
+                        status: uploadStatus
                     }
                     dispatch({
                         type: UPDATE_IMAGE_DB,

@@ -29,7 +29,7 @@ function DrawerContent({ props, navigation }) {
                                     color={color}
                                     size={size} />)}
                                 label='Sign out'
-                                onPress={() => { }}
+                                onPress={() => { navigation.popToTop() }}
                             />
                         </Drawer.Section>
                         <DrawerItem
