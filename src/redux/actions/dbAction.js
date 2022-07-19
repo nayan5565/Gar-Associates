@@ -469,6 +469,7 @@ export const updateImage = (item, index, number, uploadStatus) => {
 
 export const getAllImage = () => {
     return async dispatch => {
+        createTable()
         db.transaction((tx) => {
 
             tx.executeSql('SELECT * FROM ImageList', [],

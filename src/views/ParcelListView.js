@@ -468,8 +468,9 @@ function ParcelListView({ navigation }) {
                             //         console.log('status==>', res.imageNumber)
                             //     }
                             // }
-
-                            writeCSV(csvDataList)
+                            var folderID = await getData('newFolderID')
+                            if (folderID != 'No Data')
+                                writeCSV(csvDataList)
                             // var token = await tokenRefresh()
                             // console.log('get ref token==>', token)
 
@@ -483,7 +484,9 @@ function ParcelListView({ navigation }) {
     }
 
     const TakeImageView = (item, index) => {
-        const imagesByAddress = imageList.filter(e => e.address === item.address);
+        var imagesByAddress = []
+        if (imageList.length > 0)
+            imagesByAddress = imageList.filter(e => e.address === item.address);
         return (
             <View style={{ paddingHorizontal: 12 }}>
                 <View style={{ flexDirection: 'row', width: screen.width, justifyContent: 'space-between' }} >

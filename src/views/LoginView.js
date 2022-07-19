@@ -37,6 +37,7 @@ class LoginView extends Component {
             console.log('Login res==>', JSON.stringify(authState))
             this.props.navigation.navigate('Home')
         } catch (error) {
+            this.setState({ isLogin: false });
             console.log(error);
         }
 
