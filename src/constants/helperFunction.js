@@ -2,6 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 import { showMessage } from "react-native-flash-message";
 import RNFetchBlob from "rn-fetch-blob";
+import { refresh } from 'react-native-app-auth';
+import { CLIENT_ID, MOBILE_REDIRECT_URL3 } from "./one_drive_credential";
 
 const showError = (msg) => {
     showMessage({
@@ -21,6 +23,30 @@ const showSuccess = (msg) => {
 export {
     showError,
     showSuccess
+}
+
+const config = {
+    clientId: CLIENT_ID,
+    redirectUrl: MOBILE_REDIRECT_URL3,
+    scopes: ["User.Read", "Files.ReadWrite", "offline_access"],
+    additionalParameters: { prompt: 'select_account' },
+    serviceConfiguration: {
+        authorizationEndpoint:
+            'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+        tokenEndpoint: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+    },
+};
+
+export const tokenRefresh = async () => {
+    var refreshTokenData = await getData('refreshToken')
+    console.log('refreshTokenData==>', refreshTokenData)
+    const result = await refresh(config, {
+        refreshToken: refreshTokenData,
+    });
+    await storeData('token', result.accessToken)
+    await storeData('refreshToken', result.refreshToken)
+    console.log('refresh==>', result.accessToken)
+    return result.accessToken
 }
 
 export const storeData = async (key, value) => {
@@ -162,10 +188,9 @@ const uploadCsv = async (csvFile) => {
     // console.log('response===>', JSON.stringify(response))
     if (response.respInfo.status === 201) {
         alert('CSV successfully uploaded')
+        return 'done'
     } else {
-        addressStatus = 'No'
         //401 is expired token
-
         if (response.respInfo.status === 401) {
             alert('Token expired!!Please login again!!')
             // navigation.popToTop()
@@ -173,15 +198,14 @@ const uploadCsv = async (csvFile) => {
             //404 is folder not found
 
         }
-
-        return
+        return 'failed'
     }
 
 
 }
 
 
-export const writeCSV = (csvDataList) => {
+export const writeCSV = async (csvDataList) => {
     try {
 
         var HEADER = 'PARCEL_ID,ADDRESS, PRINT_KEY, PROPERTY_CLASS, BUILD_STYLE, SFLA, LAT, LONG, PHOTOS_TAKEN, PHOTOS_UPLOADED,  ALL_PHOTOS_UPLOADED\n';
@@ -191,14 +215,15 @@ export const writeCSV = (csvDataList) => {
         RNFetchBlob.fs
             .writeFile(FILE_PATH, csvString, "utf8")
             .then(() => {
-                // alert("File updated succesfully");
                 console.log(`wrote file ${FILE_PATH}`);
-                uploadCsv(FILE_PATH)
+                var status = uploadCsv(FILE_PATH)
+                return 'success'
             })
-            .catch(error => alert(error));
+            .catch(error => { alert(error); return 'error' });
 
     } catch (error) {
         // Error retrieving data
+        return 'error'
     }
 };
 

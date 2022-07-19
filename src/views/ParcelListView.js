@@ -4,7 +4,7 @@ import GlobalStyle from '../constants/GlobalStyle';
 import { useDispatch, useSelector } from 'react-redux';
 import { ImageView, ItemDivider, Loader, VerticalGap } from '../constants/CustomWidget';
 import RNFetchBlob from 'rn-fetch-blob';
-import { checkConnected, ConvertToCSV, getData, getUnique, storeData, writeCSV } from '../constants/helperFunction';
+import { checkConnected, ConvertToCSV, getData, getUnique, storeData, tokenRefresh } from '../constants/helperFunction';
 import { getImageData, getImageLength, pickMultipleFile, getAllImage, updateImage } from '../redux/actions/dbAction';
 
 const screen = Dimensions.get('window')
@@ -23,6 +23,7 @@ function ParcelListView({ navigation }) {
     const [fileUploadNumber, setFileUploadNumber] = useState(1);
     const [selectedItem, setSelectedItem] = useState();
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [csvUploading, setCsvUploading] = useState(false);
     // const [totalPendingImage, setTotalPendingImage] = useState(0);
 
     useEffect(() => {
@@ -135,10 +136,11 @@ function ParcelListView({ navigation }) {
                         upload(result.id)
                     } else if (response.status == 401) {
                         // alert('Token expired!!Please login again!!')
-                        setAllUploaded(false)
-                        setUploading(false)
-                        // navigation.replace('Landing')
-                        navigation.popToTop()
+                        // setAllUploaded(false)
+                        // setUploading(false)
+                        // navigation.popToTop()
+                        var token = await tokenRefresh()
+                        createFile()
                         return
                     } else {
                         var folderID = await getData('newFolderID')
@@ -231,7 +233,11 @@ function ParcelListView({ navigation }) {
                         setAllUploaded(false)
                         setUploading(false)
                         if (response.respInfo.status === 401) {
-                            navigation.popToTop()
+                            var token = await tokenRefresh()
+                            console.log('get ref token==>', token)
+                            var folderID = await getData('newFolderID')
+                            upload(folderID)
+                            // navigation.popToTop()
                         } else if (response.respInfo.status === 404) {
                             //404 is folder not found
                             storeData('newFolderID', '')
@@ -268,19 +274,87 @@ function ParcelListView({ navigation }) {
         alert('All image successfully uploaded')
     }
 
-    const getImageLen = (address) => {
+    const uploadCsv = async (csvFile) => {
+        var accessToken = await getData('token')
+        var folderID = await getData('newFolderID')
+        var newFolderId = folderID + ':/'
+        console.log('folderID==>', accessToken)
 
-        var imageCount = 0
-        for (var i = 0; i < imageList.length; i++) {
-            if (imageList[i].address == address) {
-                imageCount++
+        var isNetwork = await checkConnected()
+        if (!isNetwork) {
+            alert('Network connection lost!!')
+            setCsvUploading(false)
+            return
+        }
+        var fileName = await getData('csv_name')
+        var folderName = fileName.split('.')[0]
+        let tempDate = new Date()
+        let fDate = (tempDate.getMonth() + 1) + '-' + tempDate.getDate() + '-' + tempDate.getFullYear()
+        let fTime = tempDate.getHours() + '-' + tempDate.getMinutes() + '-' + tempDate.getSeconds()
+        let dateTime = fDate + '_' + fTime
+        var amPm = 'AM'
+        if (tempDate.getHours() > 11)
+            amPm = 'PM'
+
+        var csvFileName = folderName.toLocaleLowerCase() + '_' + dateTime + '_' + amPm + '.csv'
+        console.log(csvFileName)
+        // console.log('Image name==>', imageName)
+        const path = csvFile;
+        var url = 'https://graph.microsoft.com/v1.0/me/drive/items/' + newFolderId + csvFileName + ':/content'
+        let response = await RNFetchBlob.fetch(
+            "PUT",
+            url,
+            {
+                Accept: "application/json",
+                'Authorization': 'Bearer ' + accessToken,
+                "Content-Type": "multipart/form-data"
+            },
+            RNFetchBlob.wrap(decodeURIComponent(path))
+        );
+        console.log('response.status==>', response.respInfo.status)
+        // console.log('response===>', JSON.stringify(response))
+        setCsvUploading(false)
+        if (response.respInfo.status === 201) {
+            alert('CSV uploaded as ' + csvFileName)
+        } else {
+            //401 is expired token
+            if (response.respInfo.status === 401) {
+                // alert('Token expired!!Please login again!!')
+                // navigation.popToTop()
+                var token = await tokenRefresh()
+                console.log('get ref token==>', token)
+                uploadCsv(path)
+            } else if (response.respInfo.status === 404) {
+                //404 is folder not found
+
             }
         }
 
-        // console.log('db imageCount2===>', imageCount)
-        return imageCount
 
     }
+
+
+    const writeCSV = async (csvDataList) => {
+        try {
+            setCsvUploading(true)
+            var HEADER = 'PARCEL_ID,ADDRESS, PRINT_KEY, PROPERTY_CLASS, BUILD_STYLE, SFLA, LAT, LONG, PHOTOS_TAKEN, PHOTOS_UPLOADED,  ALL_PHOTOS_UPLOADED\n';
+
+            const FILE_PATH = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
+            const csvString = `${HEADER}${ConvertToCSV(csvDataList)}`;
+            RNFetchBlob.fs
+                .writeFile(FILE_PATH, csvString, "utf8")
+                .then(() => {
+                    console.log(`wrote file ${FILE_PATH}`);
+                    uploadCsv(FILE_PATH)
+
+                })
+                .catch(error => { alert(error); setCsvUploading(false) });
+
+        } catch (error) {
+            // Error retrieving data
+            alert(error)
+        }
+    };
 
     const ChildView = (item, index) => {
         return (
@@ -344,19 +418,6 @@ function ParcelListView({ navigation }) {
         )
     }
 
-    // createCsvFile = () => {
-    //     var HEADER='PARCEL_ID,ADDRESS, PRINT_KEY, PROPERTY_CLASS, BUILD_STYLE, SFLA, LAT, LONG, PHOTOS_TAKEN, PHOTOS_UPLOADED,  ALL_PHOTOS_UPLOADED\n';
-    //     csvString = `${HEADER}`;
-    //     const FILE_PATH = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
-    //     RNFetchBlob.fs
-    //         .writeFile(FILE_PATH, csvString, "utf8")
-    //         .then(() => {
-    //             alert("File created succesfully");
-
-    //         })
-    //         .catch(error => console.error(error));
-    // };
-
     const UploadTopView = () => {
         return (
             <View style={{ flexDirection: 'row', marginTop: 0, paddingHorizontal: 8 }}>
@@ -409,8 +470,11 @@ function ParcelListView({ navigation }) {
                             // }
 
                             writeCSV(csvDataList)
+                            // var token = await tokenRefresh()
+                            // console.log('get ref token==>', token)
+
                         }} >
-                        <Text style={{ color: 'white', alignSelf: 'center', textTransform: 'uppercase' }}>Upload CSV</Text>
+                        <Text style={{ color: 'white', alignSelf: 'center', textTransform: 'uppercase' }}>{csvUploading ? 'Uploading...' : 'Upload CSV'}</Text>
 
                     </TouchableOpacity>
                 </View>

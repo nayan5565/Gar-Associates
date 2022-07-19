@@ -9,7 +9,7 @@ import { storeData } from '../constants/helperFunction';
 
 const screen = Dimensions.get('window')
 
-class LandingView extends Component {
+class LoginView extends Component {
     state = { isLogin: false };
 
 
@@ -18,7 +18,7 @@ class LandingView extends Component {
         const config = {
             clientId: CLIENT_ID,
             redirectUrl: MOBILE_REDIRECT_URL3,
-            scopes: ["User.Read", "Files.ReadWrite"],
+            scopes: ["User.Read", "Files.ReadWrite", "offline_access"],
             additionalParameters: { prompt: 'select_account' },
             serviceConfiguration: {
                 authorizationEndpoint:
@@ -33,7 +33,8 @@ class LandingView extends Component {
             const authState = await authorize(config);
             this.setState({ isLogin: false });
             await storeData('token', authState.accessToken)
-            // console.log('Login res==>', JSON.stringify(authState))
+            await storeData('refreshToken', authState.refreshToken)
+            console.log('Login res==>', JSON.stringify(authState))
             this.props.navigation.navigate('Home')
         } catch (error) {
             console.log(error);
@@ -71,4 +72,4 @@ class LandingView extends Component {
     }
 }
 
-export default LandingView;
+export default LoginView;

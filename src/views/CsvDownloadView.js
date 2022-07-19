@@ -14,7 +14,7 @@ const screen = Dimensions.get('window')
 const csvFilePath = 'https://clearpathinnovations-my.sharepoint.com/personal/testuser_cpimobile_com/_layouts/15/Doc.aspx?sourcedoc=%7B1AF9FDC0-38A1-4CB0-AA63-DC4B6D8CC3E0%7D&file=test%20list.csv'
 
 
-function CsvDownloadView(props) {
+function CsvDownloadView({ navigation }) {
     const dispatch = useDispatch()
     const getCsvData = (csvFile) => dispatch(readCsvData(csvFile))
     const getAddress = () => dispatch(getAddressFromSP())
@@ -140,7 +140,12 @@ function CsvDownloadView(props) {
                 downloadFile(url)
             } else {
                 setDownloading(false)
-                alert(JSON.stringify(result))
+                // alert(JSON.stringify(result))
+                if (response.status === 401) {
+                    // navigation.popToTop()
+                    await tokenRefresh()
+                    fetchDownloadUrl()
+                }
             }
         } catch (error) {
             setDownloading(false)
