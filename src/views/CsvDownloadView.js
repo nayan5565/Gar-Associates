@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { SafeAreaView, TouchableOpacity, Text, TextInput, View, FlatList, Dimensions, Platform, PermissionsAndroid, Alert } from 'react-native';
 import { readFile } from 'react-native-fs';
 import GlobalStyle from '../constants/GlobalStyle';
-import { getData, storeData } from '../constants/helperFunction';
+import { checkConnected, getData, storeData } from '../constants/helperFunction';
 import DocumentPicker from 'react-native-document-picker';
 import XLSX from 'xlsx'
 import RNFetchBlob from 'rn-fetch-blob'
@@ -29,11 +29,16 @@ function CsvDownloadView(props) {
         let isMounted = true;
         if (isMounted) {
             getAddress()
+            checkInternet()
 
         }
 
         return () => { isMounted = false };
     }, []);
+
+    const checkInternet = async () => {
+        console.log('network==>', await checkConnected())
+    }
 
     const readCsvFile = (csvFile) => {
         getCsvData(csvFile)
@@ -159,7 +164,7 @@ function CsvDownloadView(props) {
                     text: "OK", onPress: () => {
                         var fileExtension = csvFileName.substring(csvFileName.lastIndexOf('.') + 1)
 
-                        if (csvFileName.length < 1 || fileExtension != 'csv') {
+                        if (csvFileName.length < 1 || fileExtension.trim().toLowerCase() != 'csv') {
                             alert("File format must be CSV, please enter full file name including '.csv' extension. ")
                         } else {
                             checkPermission()

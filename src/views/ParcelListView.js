@@ -4,7 +4,7 @@ import GlobalStyle from '../constants/GlobalStyle';
 import { useDispatch, useSelector } from 'react-redux';
 import { ImageView, ItemDivider, Loader, VerticalGap } from '../constants/CustomWidget';
 import RNFetchBlob from 'rn-fetch-blob';
-import { getData, storeData } from '../constants/helperFunction';
+import { checkConnected, ConvertToCSV, getData, getUnique, storeData, writeCSV } from '../constants/helperFunction';
 import { getImageData, getImageLength, pickMultipleFile, getAllImage, updateImage } from '../redux/actions/dbAction';
 
 const screen = Dimensions.get('window')
@@ -79,6 +79,11 @@ function ParcelListView({ navigation }) {
     // }
 
     const createFile = async () => {
+        var isNetwork = await checkConnected()
+        if (!isNetwork) {
+            alert('Network connection lost!!')
+            return
+        }
         const pendingImages = imageList.filter(e => e.status === 'pending');
         // setTotalPendingImage(pendingImages.length)
         // console.log('totalPending==>', pendingImages.length)
@@ -106,7 +111,7 @@ function ParcelListView({ navigation }) {
                 var photoappUrl = 'https://graph.microsoft.com/v1.0/me/drive/root:/photoapp:/children'
 
                 var raw = JSON.stringify({
-                    "name": folderName,
+                    "name": folderName.toLocaleLowerCase(),
                     "folder": {},
                     "@microsoft.graph.conflictBehavior": "rename"
 
@@ -191,6 +196,11 @@ function ParcelListView({ navigation }) {
                     numberByAddress = numberByAddress + 1
                 }
                 for (const res of imagesByAddress) {
+                    var isNetwork = await checkConnected()
+                    if (!isNetwork) {
+                        alert('Network connection lost!!')
+                        return
+                    }
                     var extc = res.imageName.substring(res.imageName.lastIndexOf('.'))
                     if (numberByAddress > 1)
                         imageName = res.address + ' ' + numberByAddress + extc
@@ -222,6 +232,11 @@ function ParcelListView({ navigation }) {
                         setUploading(false)
                         if (response.respInfo.status === 401) {
                             navigation.popToTop()
+                        } else if (response.respInfo.status === 404) {
+                            //404 is folder not found
+                            storeData('newFolderID', '')
+                            storeData('createdFolder', JSON.stringify(false))
+                            createFile()
                         }
 
                         return
@@ -238,6 +253,7 @@ function ParcelListView({ navigation }) {
                 // console.log('Change data', csvDataList[extractIndex])
                 var item = {
                     ...csvDataList[extractIndex],
+                    photoUploaded: csvDataList[extractIndex].process,
                     status: addressStatus
                 }
                 // console.log('Change data2==>', item)
@@ -287,7 +303,7 @@ function ParcelListView({ navigation }) {
                     <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{item.process}</Text>
                 </View>
                 <View style={{ flex: 1, alignSelf: 'center', }}>
-                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{item.status}</Text>
+                    <Text style={{ textTransform: 'uppercase', alignSelf: 'center', fontSize: 12 }}>{item.status == 'NO PHOTOS TAKEN' ? '' : item.status}</Text>
                 </View>
             </View>
         )
@@ -328,19 +344,18 @@ function ParcelListView({ navigation }) {
         )
     }
 
-    function getUnique(arr, index) {
+    // createCsvFile = () => {
+    //     var HEADER='PARCEL_ID,ADDRESS, PRINT_KEY, PROPERTY_CLASS, BUILD_STYLE, SFLA, LAT, LONG, PHOTOS_TAKEN, PHOTOS_UPLOADED,  ALL_PHOTOS_UPLOADED\n';
+    //     csvString = `${HEADER}`;
+    //     const FILE_PATH = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
+    //     RNFetchBlob.fs
+    //         .writeFile(FILE_PATH, csvString, "utf8")
+    //         .then(() => {
+    //             alert("File created succesfully");
 
-        const unique = arr
-            .map(e => e[index])
-
-            // store the keys of the unique objects
-            .map((e, i, final) => final.indexOf(e) === i && i)
-
-            // eliminate the dead keys & store unique objects
-            .filter(e => arr[e]).map(e => arr[e]);
-
-        return unique;
-    }
+    //         })
+    //         .catch(error => console.error(error));
+    // };
 
     const UploadTopView = () => {
         return (
@@ -367,31 +382,33 @@ function ParcelListView({ navigation }) {
                             // storeData('createdFolder', JSON.stringify(true))
                             // var folderCreated = await getData('createdFolder')
 
-                            const csvL = csvDataList[extractIndex]
-                            const newPost = imageList.filter(e => e.address === '168 N Long St');
+                            // const csvL = csvDataList[extractIndex]
+                            // const newPost = imageList.filter(e => e.address === '168 N Long St');
 
-                            const uniqueAddress = getUnique(imageList, 'address')
-                            let list = imageList
-                            let unique = []
-                            list.forEach(item => {
-                                if (!unique.includes(item.address)) {
-                                    unique.push(item.address)
-                                }
-                            })
+                            // const uniqueAddress = getUnique(imageList, 'address')
+                            // let list = imageList
+                            // let unique = []
+                            // list.forEach(item => {
+                            //     if (!unique.includes(item.address)) {
+                            //         unique.push(item.address)
+                            //     }
+                            // })
 
                             // alert(uniqueAddress[0].address)
-                            var extractIndex = 0;
-                            for (const ads of uniqueAddress) {
-                                extractIndex = csvDataList.findIndex(e => e.address === ads.address);
-                                const imagesByAddress = imageList.filter(e => e.address === ads.address && e.status === 'uploaded');
-                                var number = imagesByAddress[imagesByAddress.length - 1].imageNumber
-                                console.log('uniq address==>', ads.address)
-                                console.log('uniq len==>', uniqueAddress.length)
-                                // console.log('imagesByAddress==>', JSON.stringify(imagesByAddress))
-                                for (const res of imagesByAddress) {
-                                    console.log('status==>', res.imageNumber)
-                                }
-                            }
+                            // var extractIndex = 0;
+                            // for (const ads of uniqueAddress) {
+                            //     extractIndex = csvDataList.findIndex(e => e.address === ads.address);
+                            //     const imagesByAddress = imageList.filter(e => e.address === ads.address && e.status === 'uploaded');
+                            //     var number = imagesByAddress[imagesByAddress.length - 1].imageNumber
+                            //     console.log('uniq address==>', ads.address)
+                            //     console.log('uniq len==>', uniqueAddress.length)
+                            //     // console.log('imagesByAddress==>', JSON.stringify(imagesByAddress))
+                            //     for (const res of imagesByAddress) {
+                            //         console.log('status==>', res.imageNumber)
+                            //     }
+                            // }
+
+                            writeCSV(csvDataList)
                         }} >
                         <Text style={{ color: 'white', alignSelf: 'center', textTransform: 'uppercase' }}>Upload CSV</Text>
 

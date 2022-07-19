@@ -51,13 +51,15 @@ export const readCsvData = (csvFile) => {
                         temp.push({
                             id: data[i][0],
                             address: data[i][1],
+                            printKey: data[i][2],
                             propertyClass: data[i][3],
                             buildStyle: data[i][4],
                             SFLA: data[i][5],
                             LAT: data[i][6],
                             LONG: data[i][7],
                             process: '0',
-                            status: ''
+                            photoUploaded: '0',
+                            status: 'NO PHOTOS TAKEN'
                         })
                         // saveCsvAddress(data[i][0], data[i][1], data[i][3], data[i][4], '0', '')
 
@@ -124,7 +126,7 @@ export const getAddressFromSP = () => {
             var adress = await getData('csv_address')
             if (adress != 'No Data') {
                 adressList = JSON.parse(adress, [])
-                console.log('csvAdd===>', adressList)
+                // console.log('csvAdd===>', adressList)
                 console.log('csvAddL===>', adressList.length)
                 // saveTodoItems(adressList)
                 dispatch({
