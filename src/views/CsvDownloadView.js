@@ -248,6 +248,7 @@ function CsvDownloadView({ navigation }) {
                 alert('CSV Download Complete')
                 storeData('csv_name', csvFileName)
                 storeData('createdFolder', JSON.stringify(false))
+                storeData('newFolderID', 'No Data')
                 readCsvFile(res.data)
                 setDownloading(false)
             })

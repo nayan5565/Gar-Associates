@@ -4,7 +4,6 @@ import GlobalStyle from '../constants/GlobalStyle';
 import imagePath from '../constants/imagePath';
 import { authorize } from 'react-native-app-auth';
 import { CLIENT_ID, MOBILE_REDIRECT_URL3 } from '../constants/one_drive_credential';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storeData } from '../constants/helperFunction';
 
 const screen = Dimensions.get('window')
@@ -36,7 +35,7 @@ class LoginView extends Component {
             await storeData('isLogin', JSON.stringify(true))
             await storeData('refreshToken', authState.refreshToken)
             console.log('Login res==>', JSON.stringify(authState))
-            this.props.navigation.navigate('Home')
+            this.props.navigation.replace('Home')
         } catch (error) {
             this.setState({ isLogin: false });
             console.log(error);

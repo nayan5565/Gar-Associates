@@ -478,6 +478,7 @@ function ParcelListView({ navigation }) {
                             if (folderID != 'No Data')
                                 writeCSV(csvDataList)
                             else {
+                                setCsvUploading(true)
                                 await createFolderApi()
                                 writeCSV(csvDataList)
                             }
