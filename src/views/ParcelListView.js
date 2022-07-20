@@ -227,11 +227,10 @@ function ParcelListView({ navigation }) {
                     if (response.respInfo.status === 201) {
                         uploadStatus = 'uploaded'
                     } else {
-                        addressStatus = 'No'
+
                         //401 is expired token
                         // alert('Token expired!!Please login again!!')
-                        setAllUploaded(false)
-                        setUploading(false)
+
                         if (response.respInfo.status === 401) {
                             var token = await tokenRefresh()
                             console.log('get ref token==>', token)
@@ -243,6 +242,10 @@ function ParcelListView({ navigation }) {
                             storeData('newFolderID', '')
                             storeData('createdFolder', JSON.stringify(false))
                             createFile()
+                        } else {
+                            addressStatus = 'No'
+                            setAllUploaded(false)
+                            setUploading(false)
                         }
 
                         return
