@@ -9,6 +9,7 @@ import { Provider } from 'react-redux';
 import thunk from 'redux-thunk';
 import rootReducer from './src/redux/reducer/rootReducer';
 import LoginView from './src/views/LoginView';
+import SplashView from './src/views/SplashView';
 
 const store = createStore(rootReducer, applyMiddleware(thunk));
 const Stack = createNativeStackNavigator();
@@ -19,7 +20,8 @@ const App = () => {
 
     <Provider store={store}>
       <NavigationContainer >
-        <Stack.Navigator initialRouteName="Landing">
+        <Stack.Navigator initialRouteName="Splash">
+          <Stack.Screen name="Splash" component={SplashView} options={{ headerShown: false }} />
           <Stack.Screen name="Landing" component={LoginView} options={{ headerShown: false }} />
           <Stack.Screen name="One Drive" component={AppAuthView} />
           <Stack.Screen name="Api" component={OneDriveApi} />

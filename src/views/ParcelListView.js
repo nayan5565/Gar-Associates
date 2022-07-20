@@ -139,6 +139,7 @@ function ParcelListView({ navigation }) {
                         // setAllUploaded(false)
                         // setUploading(false)
                         // navigation.popToTop()
+                        // alert('Token expired!! refreshing token')
                         var token = await tokenRefresh()
                         createFolder()
                         return
@@ -232,6 +233,7 @@ function ParcelListView({ navigation }) {
                         // alert('Token expired!!Please login again!!')
 
                         if (response.respInfo.status === 401) {
+                            // alert('Token expired!! refreshing token')
                             var token = await tokenRefresh()
                             console.log('get ref token==>', token)
                             var folderID = await getData('newFolderID')
@@ -322,7 +324,7 @@ function ParcelListView({ navigation }) {
         } else {
             //401 is expired token
             if (response.respInfo.status === 401) {
-                // alert('Token expired!!Please login again!!')
+                // alert('Token expired!! refreshing token')
                 // navigation.popToTop()
                 var token = await tokenRefresh()
                 console.log('get ref token==>', token)

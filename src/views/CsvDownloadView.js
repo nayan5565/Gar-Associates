@@ -143,6 +143,7 @@ function CsvDownloadView({ navigation }) {
                 // alert(JSON.stringify(result))
                 if (response.status === 401) {
                     // navigation.popToTop()
+                    // alert('Token expired!! refreshing token')
                     await tokenRefresh()
                     fetchDownloadUrl()
                 }

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
 import { Avatar, Caption, Drawer, Paragraph, Switch, Title, TouchableRipple } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { storeData } from '../constants/helperFunction';
 import imagePath from '../constants/imagePath';
 
 const screen = Dimensions.get('window')
@@ -29,7 +30,7 @@ function DrawerContent({ props, navigation }) {
                                     color={color}
                                     size={size} />)}
                                 label='Sign out'
-                                onPress={() => { navigation.popToTop() }}
+                                onPress={async () => { await storeData('isLogin', JSON.stringify(false)); navigation.replace('Landing') }}
                             />
                         </Drawer.Section>
                         <DrawerItem

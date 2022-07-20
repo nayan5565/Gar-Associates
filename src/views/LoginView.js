@@ -33,6 +33,7 @@ class LoginView extends Component {
             const authState = await authorize(config);
             this.setState({ isLogin: false });
             await storeData('token', authState.accessToken)
+            await storeData('isLogin', JSON.stringify(true))
             await storeData('refreshToken', authState.refreshToken)
             console.log('Login res==>', JSON.stringify(authState))
             this.props.navigation.navigate('Home')

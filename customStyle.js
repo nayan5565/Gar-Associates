@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-module.exports = {
+export default StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
@@ -9,7 +9,7 @@ module.exports = {
     splashContainer: {
         flex: 1,
         justifyContent: 'center',
-        backgroundColor: 'orange',
+        backgroundColor: 'teal',
     },
     input: {
         height: 48,
@@ -135,4 +135,4 @@ module.exports = {
         justifyContent: 'center',
         marginTop: 16
     }
-}
+})
