@@ -4,7 +4,7 @@ import GlobalStyle from '../constants/GlobalStyle';
 import { useDispatch, useSelector } from 'react-redux';
 import { ImageView, ItemDivider, Loader, VerticalGap } from '../constants/CustomWidget';
 import RNFetchBlob from 'rn-fetch-blob';
-import { checkConnected, ConvertToCSV, getData, getUnique, storeData, tokenRefresh } from '../constants/helperFunction';
+import { checkConnected, ConvertToCSV, createFolderApi, getData, getUnique, storeData, tokenRefresh } from '../constants/helperFunction';
 import { getImageData, getImageLength, pickMultipleFile, getAllImage, updateImage } from '../redux/actions/dbAction';
 
 const screen = Dimensions.get('window')
@@ -79,7 +79,7 @@ function ParcelListView({ navigation }) {
     //     }
     // }
 
-    const createFile = async () => {
+    const createFolder = async () => {
         var isNetwork = await checkConnected()
         if (!isNetwork) {
             alert('Network connection lost!!')
@@ -140,7 +140,7 @@ function ParcelListView({ navigation }) {
                         // setUploading(false)
                         // navigation.popToTop()
                         var token = await tokenRefresh()
-                        createFile()
+                        createFolder()
                         return
                     } else {
                         var folderID = await getData('newFolderID')
@@ -241,7 +241,7 @@ function ParcelListView({ navigation }) {
                             //404 is folder not found
                             storeData('newFolderID', '')
                             storeData('createdFolder', JSON.stringify(false))
-                            createFile()
+                            createFolder()
                         } else {
                             addressStatus = 'No'
                             setAllUploaded(false)
@@ -432,7 +432,7 @@ function ParcelListView({ navigation }) {
                 <View style={{ alignItems: 'flex-end' }}>
                     <TouchableOpacity
                         style={{ marginLeft: 8, backgroundColor: '#5d9cec', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 4 }}
-                        onPress={() => createFile()} >
+                        onPress={() => createFolder()} >
                         {uploading ? allUpdated ? null : UploadingText() : <Text style={{ color: 'white', alignSelf: 'center', textTransform: 'uppercase' }}>Upload Photos</Text>}
 
                     </TouchableOpacity>
@@ -471,9 +471,14 @@ function ParcelListView({ navigation }) {
                             //         console.log('status==>', res.imageNumber)
                             //     }
                             // }
+
                             var folderID = await getData('newFolderID')
                             if (folderID != 'No Data')
                                 writeCSV(csvDataList)
+                            else {
+                                await createFolderApi()
+                                writeCSV(csvDataList)
+                            }
                             // var token = await tokenRefresh()
                             // console.log('get ref token==>', token)
 

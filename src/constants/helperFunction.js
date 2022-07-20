@@ -4,6 +4,7 @@ import { showMessage } from "react-native-flash-message";
 import RNFetchBlob from "rn-fetch-blob";
 import { refresh } from 'react-native-app-auth';
 import { CLIENT_ID, MOBILE_REDIRECT_URL3 } from "./one_drive_credential";
+import { exp } from "react-native-reanimated";
 
 const showError = (msg) => {
     showMessage({
@@ -252,4 +253,66 @@ export const createCsv = () => {
             console.log(`finally wrote file ${pathToWrite}`);
         })
         .catch(error => console.error(error));
+}
+
+export const createFolderApi = async () => {
+    var folderID = ''
+    var isNetwork = await checkConnected()
+    if (!isNetwork) {
+        alert('Network connection lost!!')
+        return
+    }
+
+    var folderCreated = await getData('createdFolder')
+
+    if (folderCreated == 'true') {
+        console.log('Already have');
+        folderID = await getData('newFolderID')
+
+    } else {
+        var fileName = await getData('csv_name')
+        var folderName = fileName.split('.')[0]
+        var token = await getData('token')
+        // console.log('createFile token: ' + token);
+        var rootUrl = 'https://graph.microsoft.com/v1.0/me/drive/root/children'
+        var photoappUrl = 'https://graph.microsoft.com/v1.0/me/drive/root:/photoapp:/children'
+
+        var raw = JSON.stringify({
+            "name": folderName.toLocaleLowerCase(),
+            "folder": {},
+            "@microsoft.graph.conflictBehavior": "rename"
+
+        });
+        try {
+            const response = await fetch(photoappUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                body: raw,
+            });
+            const result = await response.json();
+            console.log('createFile res: ' + response.status);
+            if (response.status == 201) {
+                console.log('createFile: ' + JSON.stringify(result));
+                storeData('newFolderID', result.id)
+                storeData('createdFolder', JSON.stringify(true))
+                folderID = result.id
+
+            } else if (response.status == 401) {
+                console.log('token refresh:');
+                var token = await tokenRefresh()
+                createFolder()
+                return
+            } else {
+                console.log('else err');
+                folderID = 'No Folder'
+            }
+        } catch (error) {
+            console.log('catch err');
+            folderID = 'No Folder'
+        }
+    }
+    return folderID
 }
